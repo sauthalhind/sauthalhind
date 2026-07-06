@@ -1,0 +1,46 @@
+﻿import type { Metadata } from 'next';
+import { IBM_Plex_Sans_Arabic, Inter, Noto_Kufi_Arabic } from 'next/font/google';
+import './globals.css';
+
+const arabic = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-arabic' });
+const english = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-english' });
+const kufi = Noto_Kufi_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-kufi' });
+
+export const metadata: Metadata = {
+  title: 'جريدة صوت الهند | Sawt Al-Hind News',
+  description: 'منصة أخبار عربية احترافية متعددة اللغات مع تغطية فورية وتحليلات ووسائط.',
+  metadataBase: new URL('https://sawtalhind.news'),
+  alternates: { languages: { ar: '/', en: '/en' } },
+  keywords: ['أخبار', 'صحافة عربية', 'أخبار الهند', 'أخبار عربية', 'أخبار عاجلة', 'رياضة', 'اقتصاد', 'ديني'],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1
+    }
+  },
+  openGraph: {
+    title: 'جريدة صوت الهند',
+    description: 'منصة أخبار عربية احترافية متعددة اللغات.',
+    type: 'website',
+    locale: 'ar_AR',
+    url: 'https://sawtalhind.news'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'جريدة صوت الهند',
+    description: 'منصة أخبار عربية احترافية متعددة اللغات.'
+  }
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="ar" dir="rtl" className={`${arabic.variable} ${english.variable} ${kufi.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
+}

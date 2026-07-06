@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>جريدة صوت الهند | Mobile Preview</title>
+  <style>
+    :root{
+      --bg:#f7faf9; --surface:#fff; --surface-low:#f1f4f3; --line:#e0e3e2;
+      --text:#181c1c; --muted:#3e4948; --primary:#00524e; --gold:#d4af37;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg)}
+    .top{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.06);z-index:10}
+    .row{display:flex;align-items:center;gap:10px;padding:14px 16px}
+    .brand{font-weight:700;color:var(--primary);font-size:20px;line-height:1}
+    .sub{font-size:11px;letter-spacing:.22em;color:#7d8382;margin-top:4px}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--muted)}
+    .ticker{background:var(--surface-low);border-top:1px solid rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.04);padding:10px 16px;display:flex;gap:12px;overflow:auto;white-space:nowrap}
+    .ticker span{font-size:12px;color:var(--muted)}
+    .hero{margin:16px;overflow:hidden;border:1px solid rgba(0,0,0,.06);border-radius:26px;background:var(--surface);box-shadow:0 16px 36px rgba(17,24,39,.06)}
+    .hero-img{height:240px;background:linear-gradient(135deg, rgba(0,82,78,.28), rgba(212,175,55,.2)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80') center/cover}
+    .hero-body{padding:18px}
+    .title{font-size:28px;line-height:1.25;font-weight:800;margin:12px 0 10px;letter-spacing:-.03em}
+    .summary{font-size:15px;line-height:1.9;color:var(--muted);margin:0 0 14px}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .chip{border:1px solid var(--line);background:#fff;padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;color:var(--primary)}
+    .section{margin:0 16px 16px;background:var(--surface);border:1px solid rgba(0,0,0,.06);border-radius:22px;padding:16px}
+    .section h2{margin:0 0 12px;font-size:18px}
+    .item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+    .item:last-child{border-bottom:0}
+    .thumb{width:74px;height:74px;border-radius:16px;flex:0 0 auto;background:linear-gradient(135deg, rgba(0,82,78,.14), rgba(212,175,55,.18));background-size:cover;background-position:center}
+    .item h3{margin:0;font-size:15px;line-height:1.7}
+    .item p{margin:6px 0 0;font-size:12px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .card{border:1px solid rgba(0,0,0,.06);border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 8px 20px rgba(17,24,39,.05)}
+    .card .img{height:110px;background:linear-gradient(135deg, rgba(0,82,78,.2), rgba(212,175,55,.16)), url('https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=900&q=80') center/cover}
+    .card .body{padding:12px}
+    .card .kicker{font-size:11px;font-weight:700;color:var(--primary)}
+    .card .headline{margin:6px 0 0;font-size:14px;line-height:1.7;font-weight:700}
+    .footer{padding:20px 16px 30px;color:var(--muted);font-size:12px;text-align:center}
+    .topline{display:flex;justify-content:space-between;align-items:center;width:100%}
+    .icons{display:flex;align-items:center;gap:8px}
+    .circle{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;background:#fff;color:var(--muted);font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="row topline">
+        <div>
+          <div class="brand">جريدة صوت الهند</div>
+          <div class="sub">Sawt Al-Hind News</div>
+        </div>
+        <div class="icons">
+          <div class="circle">⌕</div>
+          <div class="circle">☰</div>
+        </div>
+      </div>
+      <div class="ticker">
+        <span class="pill">عاجل</span>
+        <span>مدبولي: توجيهات بالارتقاء بالرعاية الصحية</span>
+        <span>الاتحاد الألماني يعلن مؤتمرًا مهمًا</span>
+        <span>الأسواق العالمية تترقب قرارات الفائدة</span>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-img"></div>
+      <div class="hero-body">
+        <div class="chips">
+          <span class="chip">ديني</span>
+          <span class="chip">Featured</span>
+        </div>
+        <div class="title">مفتي الهند يرحب باتفاق السلام الإيراني الأمريكي ويشيد بالدعم الدولي</div>
+        <p class="summary">تصميم موبايل نظيف ومريح، مع عنوان واضح، نص كبير، ومساحات بيضاء كافية للقراءة السريعة على الهاتف.</p>
+        <div class="meta"><span>قسم التحرير</span><span>•</span><span>08:03 م - 15 يونيو 2026</span><span>•</span><span>5 دقائق</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>أبرز العناوين</h2>
+      <div class="item">
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80')"></div>
+        <div>
+          <h3>الهند والصين تبحثان قنوات جديدة للتنسيق الاقتصادي</h3>
+          <p>منذ 35 دقيقة</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=900&q=80')"></div>
+        <div>
+          <h3>غزات إسرائيلية تثير قلقًا أمميًا واسعًا</h3>
+          <p>منذ 55 دقيقة</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb" style="background-image:url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=900&q=80')"></div>
+        <div>
+          <h3>الكونغرس الأمريكي يقر حزمة دعم دفاعي جديدة</h3>
+          <p>منذ ساعة</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>آخر الأخبار</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="img" style="background-image:url('https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&w=900&q=80')"></div>
+          <div class="body">
+            <div class="kicker">أخبار البلد</div>
+            <div class="headline">صدى البلد يعلن تحديثات جديدة على خدمات الموقع</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="img" style="background-image:url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80')"></div>
+          <div class="body">
+            <div class="kicker">رياضة</div>
+            <div class="headline">كولومب يقترب من اللقب بعد فوز مثير في الدوري الممتاز</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>الأقسام</h2>
+      <div class="chips">
+        <span class="chip">الرئيسية</span><span class="chip">أهم الأخبار</span><span class="chip">أخبار البلد</span><span class="chip">رياضة</span><span class="chip">ديني</span><span class="chip">اقتصاد</span>
+      </div>
+    </div>
+
+    <div class="footer">جريدة صوت الهند | نسخة عرض موبايل سريعة وخفيفة</div>
+  </div>
+</body>
+</html>
