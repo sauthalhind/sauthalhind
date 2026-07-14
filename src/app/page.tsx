@@ -42,6 +42,11 @@ export default async function HomePage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button className="rounded-full border border-black/8 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurfaceVariant shadow-sm sm:hidden">Menu</button>
+              <img
+                src="/sauthalhind.png"
+                alt="Sauthalhind logo"
+                className="h-12 w-12 rounded-2xl object-cover shadow-sm"
+              />
               <div>
                 <div className="font-headline-md text-[18px] font-semibold tracking-[-0.02em] text-brand-primary sm:text-[22px]">جريدة صوت الهند</div>
                 <div className="text-[11px] uppercase tracking-[0.28em] text-black/35">Sawt Al-Hind News</div>
@@ -164,7 +169,10 @@ export default async function HomePage() {
         <Container className="py-8">
           <div className="grid gap-8 md:grid-cols-[1.3fr_1fr_1fr]">
             <div>
-              <div className="font-headline-md text-[22px] font-semibold text-brand-primary">جريدة صوت الهند</div>
+              <div className="flex items-center gap-3">
+                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-12 w-12 rounded-2xl object-cover" />
+                <div className="font-headline-md text-[22px] font-semibold text-brand-primary">جريدة صوت الهند</div>
+              </div>
               <p className="mt-3 max-w-md text-sm leading-7 text-brand-onSurfaceVariant">
                 Clean news portal shell without demo content. Connect your CMS or backend to show live news.
               </p>
