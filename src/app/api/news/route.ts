@@ -1,45 +1,34 @@
-type NewsItem = {
-  id: string;
-  title: string;
-  slug: string;
-  author: string;
-  category: string;
-  body: string;
-  status: 'draft' | 'published' | 'review' | 'scheduled';
-  createdAt: string;
-};
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __newsStore: NewsItem[] | undefined;
-}
-
-const store = globalThis.__newsStore ?? [];
-globalThis.__newsStore = store;
+﻿import { createNews, listNews } from '@/lib/news-store';
 
 export async function GET() {
-  return Response.json({ ok: true, items: store.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)) });
+  const result = await listNews();
+
+  if (!result.ok) {
+    return Response.json({ ok: false, error: result.error }, { status: 500 });
+  }
+
+  return Response.json({ ok: true, items: result.items, source: result.source });
 }
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as Partial<NewsItem>;
+  const payload = await request.json();
 
   if (!payload.title || !payload.slug || !payload.category) {
     return Response.json({ ok: false, error: 'title, slug, and category are required' }, { status: 400 });
   }
 
-  const item: NewsItem = {
-    id: crypto.randomUUID(),
-    title: payload.title,
-    slug: payload.slug,
-    author: payload.author ?? 'Editorial',
-    category: payload.category,
-    body: payload.body ?? '',
-    status: payload.status ?? 'draft',
-    createdAt: new Date().toISOString()
-  };
+  const result = await createNews({
+    title: String(payload.title),
+    slug: String(payload.slug),
+    author: String(payload.author ?? 'Editorial'),
+    category: String(payload.category),
+    body: String(payload.body ?? ''),
+    status: (payload.status ?? 'draft') as 'draft' | 'published' | 'review' | 'scheduled'
+  });
 
-  store.unshift(item);
+  if (!result.ok) {
+    return Response.json({ ok: false, error: result.error }, { status: 500 });
+  }
 
-  return Response.json({ ok: true, item }, { status: 201 });
+  return Response.json({ ok: true, item: result.item }, { status: 201 });
 }

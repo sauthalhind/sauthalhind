@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const menu = [
   'Dashboard',
@@ -63,6 +63,7 @@ export default function AdminPage() {
   const categoryRef = useRef<HTMLSelectElement | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
+  const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; category: string; status: string; created_at: string }>>([]);
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -128,6 +129,21 @@ export default function AdminPage() {
 
     flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
   };
+
+  useEffect(() => {
+    const loadNews = async () => {
+      const response = await fetch('/api/news');
+      const result = (await response.json()) as
+        | { ok: true; items: Array<{ id: string; title: string; category: string; status: string; created_at: string }> }
+        | { ok: false; error?: string };
+
+      if (response.ok && result.ok) {
+        setSavedNews(result.items);
+      }
+    };
+
+    void loadNews();
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#f4f7f6] text-[#132126]">
@@ -397,6 +413,31 @@ export default function AdminPage() {
                   Title, description, canonical URL, image alt text, and schema before publish.
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
+              <h2 className="text-xl font-bold tracking-[-0.02em]">Saved news</h2>
+              <span className="text-sm font-medium text-[#0f1d25]">{savedNews.length} items</span>
+            </div>
+            <div className="space-y-3">
+              {savedNews.length === 0 ? (
+                <div className="rounded-[22px] border border-dashed border-black/10 bg-brand-surfaceLow p-4 text-sm text-brand-onSurfaceVariant">
+                  No saved news yet. Publish one from the editor above.
+                </div>
+              ) : (
+                savedNews.map((item) => (
+                  <div key={item.id} className="grid gap-2 rounded-[22px] border border-black/8 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                    <div>
+                      <div className="text-xs text-black/45">{item.category}</div>
+                      <div className="mt-1 font-medium leading-7">{item.title}</div>
+                      <div className="mt-1 text-sm text-black/55">{item.created_at}</div>
+                    </div>
+                    <span className="rounded-full bg-[#0f1d25] px-3 py-1 text-sm text-white">{item.status}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </section>
