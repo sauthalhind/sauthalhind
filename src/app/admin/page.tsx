@@ -57,6 +57,7 @@ export default function AdminPage() {
   const workflowRef = useRef<HTMLDivElement | null>(null);
   const moderationRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const coverPhotoRef = useRef<HTMLInputElement | null>(null);
   const titleRef = useRef<HTMLInputElement | null>(null);
   const slugRef = useRef<HTMLInputElement | null>(null);
   const authorRef = useRef<HTMLInputElement | null>(null);
@@ -64,6 +65,8 @@ export default function AdminPage() {
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
   const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; category: string; status: string; created_at: string }>>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const localNewsKey = 'sawt-al-hind-admin-news';
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -117,6 +120,10 @@ export default function AdminPage() {
       created_at: new Date().toISOString()
     };
 
+    setIsSaving(true);
+    writeLocalNews([optimisticItem, ...readLocalNews()]);
+    flashStatus(status === 'published' ? 'Publishing...' : 'Saving draft...');
+
     const response = await fetch('/api/news', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -127,9 +134,8 @@ export default function AdminPage() {
       | { ok: true; item?: { id: string; created_at: string } }
       | { ok: false; error?: string };
     if (!response.ok || !result.ok) {
-      const nextItems = [optimisticItem, ...readLocalNews()];
-      writeLocalNews(nextItems);
       flashStatus('Saved locally');
+      setIsSaving(false);
       return;
     }
 
@@ -145,6 +151,7 @@ export default function AdminPage() {
     ];
     writeLocalNews(nextItems);
 
+    setIsSaving(false);
     flashStatus(
       status === 'published'
         ? 'Published to backend'
@@ -163,6 +170,8 @@ export default function AdminPage() {
       return;
     }
 
+    setIsUploading(true);
+    flashStatus('Uploading files...');
     const formData = new FormData();
     Array.from(files).forEach((file) => formData.append('files', file));
 
@@ -173,9 +182,11 @@ export default function AdminPage() {
     const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string }> };
     if (!response.ok || !result.ok) {
       flashStatus('Upload failed, but files were selected');
+      setIsUploading(false);
       return;
     }
 
+    setIsUploading(false);
     flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
   };
 
@@ -310,14 +321,29 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-4">
+                  <div className="rounded-2xl border border-dashed border-black/10 bg-brand-surfaceLow p-4">
+                    <div className="text-sm font-semibold text-brand-onSurface">Cover photo</div>
+                    <p className="mt-1 text-sm text-brand-onSurfaceVariant">
+                      Main image shown at the top of the article and in homepage cards.
+                    </p>
+                    <input ref={coverPhotoRef} type="file" accept="image/*" className="hidden" />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => coverPhotoRef.current?.click()} className="rounded-full bg-[#0f1d25] px-4 py-2 text-sm font-semibold text-white">
+                        Select cover photo
+                      </button>
+                      <button type="button" onClick={() => flashStatus('Cover photo attached')} className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold">
+                        Attach
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     ref={bodyRef}
                     className="min-h-[250px] w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none"
                     placeholder="Write the full article here..."
                   />
                   <div className="flex flex-wrap gap-3">
-                    <button type="button" onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-white">Save draft</button>
-                    <button type="button" onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-[#0f1d25]">Publish now</button>
+                    <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">Save draft</button>
+                    <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-[#0f1d25] disabled:cursor-not-allowed disabled:opacity-60">Publish now</button>
                     <button type="button" onClick={() => flashStatus('Preview opened')} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">Preview</button>
                   </div>
                 </div>
@@ -356,10 +382,11 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
+                  disabled={isUploading}
                   onClick={publishSelectedFiles}
-                  className="ml-2 mt-4 rounded-full border border-black/10 px-5 py-3 text-sm font-semibold"
+                  className="ml-2 mt-4 rounded-full border border-black/10 px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Upload now
+                  {isUploading ? 'Uploading...' : 'Upload now'}
                 </button>
               </div>
 
