@@ -1,3 +1,7 @@
+"use client";
+
+import { useRef } from 'react';
+
 const menu = [
   'Dashboard',
   'News',
@@ -46,6 +50,17 @@ const settings = [
 ];
 
 export default function AdminPage() {
+  const dashboardRef = useRef<HTMLDivElement | null>(null);
+  const newsRef = useRef<HTMLDivElement | null>(null);
+  const mediaRef = useRef<HTMLDivElement | null>(null);
+  const categoriesRef = useRef<HTMLDivElement | null>(null);
+  const workflowRef = useRef<HTMLDivElement | null>(null);
+  const moderationRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <main className="min-h-screen bg-[#f4f7f6] text-[#132126]">
       <div className="grid min-h-screen lg:grid-cols-[300px_1fr]">
@@ -61,21 +76,27 @@ export default function AdminPage() {
           </div>
 
           <nav className="grid gap-1 px-4 pb-6 text-sm font-medium">
-            {menu.map((item, index) => (
-              <a
-                key={item}
-                href="#"
-                className={`rounded-2xl px-4 py-3 transition ${
-                  index === 0 ? 'bg-white text-[#0f1d25]' : 'text-white/80 hover:bg-white/8 hover:text-white'
-                }`}
-              >
-                {item}
-              </a>
-            ))}
+            {menu.map((item, index) => {
+              const refs = [dashboardRef, newsRef, categoriesRef, mediaRef, workflowRef, moderationRef];
+              const target = refs[index] ?? dashboardRef;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => scrollToSection(target)}
+                  className={`rounded-2xl px-4 py-3 text-right transition ${
+                    index === 0 ? 'bg-white text-[#0f1d25]' : 'text-white/80 hover:bg-white/8 hover:text-white'
+                  }`}
+                >
+                  {item}
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
         <section className="p-4 sm:p-6 lg:p-8">
+          <div ref={dashboardRef} />
           <header className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -90,13 +111,13 @@ export default function AdminPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button className="rounded-full bg-[#0f1d25] px-5 py-3 text-sm font-semibold text-white">
+                <button type="button" onClick={() => scrollToSection(newsRef)} className="rounded-full bg-[#0f1d25] px-5 py-3 text-sm font-semibold text-white">
                   New story
                 </button>
-                <button className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
+                <button type="button" onClick={() => scrollToSection(mediaRef)} className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
                   Upload media
                 </button>
-                <button className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
+                <button type="button" onClick={() => scrollToSection(moderationRef)} className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
                   Open queue
                 </button>
               </div>
@@ -116,7 +137,8 @@ export default function AdminPage() {
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
-            <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+            <div ref={newsRef}>
+              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
                 <h2 className="text-xl font-bold tracking-[-0.02em]">Create and publish</h2>
                 <span className="text-sm font-medium text-[#0f1d25]">News editor</span>
@@ -160,9 +182,11 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
-            </section>
+              </section>
+            </div>
 
-            <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+            <div ref={mediaRef}>
+              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
                 <h2 className="text-xl font-bold tracking-[-0.02em]">Media library</h2>
                 <span className="text-sm font-medium text-[#0f1d25]">Images and video</span>
@@ -185,11 +209,13 @@ export default function AdminPage() {
                 <div className="rounded-2xl border border-black/8 px-4 py-3">Video caption required</div>
                 <div className="rounded-2xl border border-black/8 px-4 py-3">Copyright source required</div>
               </div>
-            </section>
+              </section>
+            </div>
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+            <div ref={categoriesRef}>
+              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
                 <h2 className="text-xl font-bold tracking-[-0.02em]">Categories and homepage blocks</h2>
                 <span className="text-sm font-medium text-[#0f1d25]">Structure</span>
@@ -212,9 +238,11 @@ export default function AdminPage() {
                   <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Homepage pin</button>
                 </div>
               </div>
-            </section>
+              </section>
+            </div>
 
-            <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+            <div ref={workflowRef}>
+              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
                 <h2 className="text-xl font-bold tracking-[-0.02em]">Publishing workflow</h2>
                 <span className="text-sm font-medium text-[#0f1d25]">Operations</span>
@@ -247,10 +275,11 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-            </section>
+              </section>
+            </div>
           </div>
 
-          <div className="mt-6 rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+          <div ref={moderationRef} className="mt-6 rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
               <h2 className="text-xl font-bold tracking-[-0.02em]">Moderation and approvals</h2>
               <span className="text-sm font-medium text-[#0f1d25]">Queue is empty</span>
