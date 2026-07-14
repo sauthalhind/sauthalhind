@@ -64,11 +64,12 @@ export default function AdminPage() {
   const categoryRef = useRef<HTMLSelectElement | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
-  const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; category: string; status: string; created_at: string }>>([]);
+  const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageName, setCoverImageName] = useState<string>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const localNewsKey = 'sawt-al-hind-admin-news';
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -87,9 +88,13 @@ export default function AdminPage() {
       return JSON.parse(window.localStorage.getItem(localNewsKey) ?? '[]') as Array<{
         id: string;
         title: string;
+        slug: string;
         category: string;
         status: string;
         created_at: string;
+        cover_image?: string | null;
+        body?: string;
+        author?: string;
       }>;
     } catch {
       return [];
@@ -97,7 +102,7 @@ export default function AdminPage() {
   };
 
   const writeLocalNews = (
-    nextItems: Array<{ id: string; title: string; category: string; status: string; created_at: string }>
+    nextItems: Array<{ id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>
   ) => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(localNewsKey, JSON.stringify(nextItems));
@@ -119,28 +124,59 @@ export default function AdminPage() {
     cover_image: coverImage
   });
 
+  const fillFormFromNews = (item: { id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }) => {
+    setEditingId(item.id);
+    if (titleRef.current) titleRef.current.value = item.title;
+    if (slugRef.current) slugRef.current.value = item.slug;
+    if (authorRef.current) authorRef.current.value = item.author ?? 'Editorial';
+    if (categoryRef.current) categoryRef.current.value = item.category;
+    if (bodyRef.current) bodyRef.current.value = item.body ?? '';
+    setCoverImage(item.cover_image ?? null);
+    setCoverImageName('');
+    flashStatus(`Editing ${item.title}`);
+  };
+
+  const resetEditor = () => {
+    setEditingId(null);
+    if (titleRef.current) titleRef.current.value = '';
+    if (slugRef.current) slugRef.current.value = '';
+    if (authorRef.current) authorRef.current.value = 'Editorial';
+    if (categoryRef.current) categoryRef.current.value = 'Breaking News';
+    if (bodyRef.current) bodyRef.current.value = '';
+    setCoverImage(null);
+    setCoverImageName('');
+    flashStatus('Editor cleared');
+  };
+
   const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
     const payload = collectPayload();
     const optimisticItem = {
-      id: crypto.randomUUID(),
+      id: editingId ?? crypto.randomUUID(),
       title: payload.title || 'Untitled story',
+      slug: payload.slug,
+      author: payload.author,
       category: payload.category,
+      body: payload.body,
+      cover_image: payload.cover_image,
       status,
       created_at: new Date().toISOString()
     };
 
     setIsSaving(true);
-    writeLocalNews([optimisticItem, ...readLocalNews()]);
-    flashStatus(status === 'published' ? 'Publishing...' : 'Saving draft...');
+    const localItems = readLocalNews();
+    writeLocalNews(
+      editingId ? localItems.map((item) => (item.id === editingId ? { ...item, ...optimisticItem } : item)) : [optimisticItem, ...localItems]
+    );
+    flashStatus(status === 'published' ? 'Publishing...' : editingId ? 'Saving changes...' : 'Saving draft...');
 
     const response = await fetch('/api/news', {
-      method: 'POST',
+      method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, status })
+      body: JSON.stringify(editingId ? { id: editingId, ...payload, status } : { ...payload, status })
     });
 
     const result = (await response.json()) as
-      | { ok: true; item?: { id: string; created_at: string } }
+      | { ok: true; item?: { id: string; created_at: string; slug?: string; author?: string; body?: string; cover_image?: string | null } }
       | { ok: false; error?: string };
     if (!response.ok || !result.ok) {
       flashStatus('Saved locally');
@@ -148,19 +184,41 @@ export default function AdminPage() {
       return;
     }
 
-    const nextItems = [
-      {
-        id: result.item?.id ?? optimisticItem.id,
-        title: payload.title || 'Untitled story',
-        category: payload.category,
-        status,
-        created_at: result.item?.created_at ?? optimisticItem.created_at
-      },
-      ...readLocalNews()
-    ];
+    const nextItems = editingId
+      ? readLocalNews().map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                id: result.item?.id ?? optimisticItem.id,
+                title: payload.title || 'Untitled story',
+                slug: payload.slug,
+                author: payload.author,
+                category: payload.category,
+                body: payload.body,
+                cover_image: payload.cover_image,
+                status,
+                created_at: result.item?.created_at ?? optimisticItem.created_at
+              }
+            : item
+        )
+      : [
+          {
+            id: result.item?.id ?? optimisticItem.id,
+            title: payload.title || 'Untitled story',
+            slug: payload.slug,
+            author: payload.author,
+            category: payload.category,
+            body: payload.body,
+            cover_image: payload.cover_image,
+            status,
+            created_at: result.item?.created_at ?? optimisticItem.created_at
+          },
+          ...readLocalNews()
+        ];
     writeLocalNews(nextItems);
 
     setIsSaving(false);
+    setEditingId(null);
     flashStatus(
       status === 'published'
         ? 'Published to backend'
@@ -168,7 +226,9 @@ export default function AdminPage() {
           ? 'Sent to review queue'
           : status === 'scheduled'
             ? 'Publish scheduled'
-            : 'Draft saved to backend'
+            : editingId
+              ? 'Changes saved to backend'
+              : 'Draft saved to backend'
     );
   };
 
@@ -199,16 +259,62 @@ export default function AdminPage() {
     flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
   };
 
+  const removeNews = async (id: string) => {
+    setIsSaving(true);
+    const response = await fetch(`/api/news?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = (await response.json()) as { ok: boolean; error?: string };
+
+    if (!response.ok || !result.ok) {
+      flashStatus(result.error ?? 'Delete failed');
+      setIsSaving(false);
+      return;
+    }
+
+    writeLocalNews(readLocalNews().filter((item) => item.id !== id));
+    if (editingId === id) {
+      resetEditor();
+    }
+    setIsSaving(false);
+    flashStatus('News deleted');
+  };
+
+  const togglePublicDraft = async (item: { id: string; status: string }) => {
+    const nextStatus = item.status === 'published' ? 'draft' : 'published';
+    setIsSaving(true);
+    const response = await fetch('/api/news', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: item.id, status: nextStatus })
+    });
+    const result = (await response.json()) as { ok: boolean; error?: string };
+
+    if (!response.ok || !result.ok) {
+      flashStatus(result.error ?? 'Status update failed');
+      setIsSaving(false);
+      return;
+    }
+
+    writeLocalNews(readLocalNews().map((news) => (news.id === item.id ? { ...news, status: nextStatus } : news)));
+    setIsSaving(false);
+    flashStatus(nextStatus === 'published' ? 'Marked public' : 'Saved as draft');
+  };
+
   useEffect(() => {
     const loadNews = async () => {
       const response = await fetch('/api/news');
       const result = (await response.json()) as
-        | { ok: true; items: Array<{ id: string; title: string; category: string; status: string; created_at: string }> }
+        | { ok: true; items: Array<{ id: string; title: string; slug?: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }> }
         | { ok: false; error?: string };
 
       if (response.ok && result.ok) {
         const localItems = readLocalNews();
-        setSavedNews([...result.items, ...localItems]);
+        setSavedNews([
+          ...result.items.map((item) => ({
+            ...item,
+            slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-')
+          })),
+          ...localItems
+        ]);
       } else {
         setSavedNews(readLocalNews());
       }
@@ -382,6 +488,7 @@ export default function AdminPage() {
                   <div className="flex flex-wrap gap-3">
                     <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">Save draft</button>
                     <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-[#0f1d25] disabled:cursor-not-allowed disabled:opacity-60">Publish now</button>
+                    <button type="button" onClick={resetEditor} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">New post</button>
                     <button type="button" onClick={() => flashStatus('Preview opened')} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">Preview</button>
                   </div>
                 </div>
@@ -545,13 +652,23 @@ export default function AdminPage() {
                 </div>
               ) : (
                 savedNews.map((item) => (
-                  <div key={item.id} className="grid gap-2 rounded-[22px] border border-black/8 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div key={item.id} className="grid gap-3 rounded-[22px] border border-black/8 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
                     <div>
                       <div className="text-xs text-black/45">{item.category}</div>
                       <div className="mt-1 font-medium leading-7">{item.title}</div>
+                      {item.cover_image ? <div className="mt-3 overflow-hidden rounded-2xl border border-black/8"><img src={item.cover_image} alt={item.title} className="h-40 w-full object-cover" /></div> : null}
                       <div className="mt-1 text-sm text-black/55">{item.created_at}</div>
                     </div>
-                    <span className="rounded-full bg-[#0f1d25] px-3 py-1 text-sm text-white">{item.status}</span>
+                    <div className="flex flex-wrap gap-2 sm:justify-end">
+                      <button type="button" disabled={isSaving} onClick={() => fillFormFromNews(item)} className="rounded-full border border-black/10 px-3 py-1 text-sm font-semibold disabled:opacity-60">Edit</button>
+                      <button type="button" disabled={isSaving} onClick={() => togglePublicDraft(item)} className="rounded-full border border-black/10 px-3 py-1 text-sm font-semibold disabled:opacity-60">
+                        {item.status === 'published' ? 'Make draft' : 'Make public'}
+                      </button>
+                      <button type="button" disabled={isSaving} onClick={() => removeNews(item.id)} className="rounded-full border border-red-200 px-3 py-1 text-sm font-semibold text-red-600 disabled:opacity-60">
+                        Delete
+                      </button>
+                      <span className="rounded-full bg-[#0f1d25] px-3 py-1 text-sm text-white">{item.status}</span>
+                    </div>
                   </div>
                 ))
               )}
