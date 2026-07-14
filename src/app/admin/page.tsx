@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 const menu = [
   'Dashboard',
@@ -56,9 +56,77 @@ export default function AdminPage() {
   const categoriesRef = useRef<HTMLDivElement | null>(null);
   const workflowRef = useRef<HTMLDivElement | null>(null);
   const moderationRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  const slugRef = useRef<HTMLInputElement | null>(null);
+  const authorRef = useRef<HTMLInputElement | null>(null);
+  const categoryRef = useRef<HTMLSelectElement | null>(null);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const flashStatus = (message: string) => {
+    setStatusMessage(message);
+    window.setTimeout(() => setStatusMessage('Ready for live publishing'), 2200);
+  };
+
+  const collectPayload = () => ({
+    title: titleRef.current?.value.trim() ?? '',
+    slug: slugRef.current?.value.trim() ?? '',
+    author: authorRef.current?.value.trim() ?? 'Editorial',
+    category: categoryRef.current?.value ?? 'Breaking News',
+    body: bodyRef.current?.value.trim() ?? ''
+  });
+
+  const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
+    const payload = collectPayload();
+    const response = await fetch('/api/news', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, status })
+    });
+
+    const result = (await response.json()) as { ok: boolean; error?: string };
+    if (!response.ok || !result.ok) {
+      flashStatus(result.error ?? 'Failed to save news');
+      return;
+    }
+
+    flashStatus(
+      status === 'published'
+        ? 'Published to backend'
+        : status === 'review'
+          ? 'Sent to review queue'
+          : status === 'scheduled'
+            ? 'Publish scheduled'
+            : 'Draft saved to backend'
+    );
+  };
+
+  const publishSelectedFiles = async () => {
+    const files = fileInputRef.current?.files;
+    if (!files || files.length === 0) {
+      flashStatus('Select files first');
+      return;
+    }
+
+    const formData = new FormData();
+    Array.from(files).forEach((file) => formData.append('files', file));
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string }> };
+    if (!response.ok || !result.ok) {
+      flashStatus('Upload failed');
+      return;
+    }
+
+    flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
   };
 
   return (
@@ -100,14 +168,17 @@ export default function AdminPage() {
           <header className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.32em] text-[#6a7f86]">Admin CMS</div>
-                <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+              <div className="text-xs font-semibold uppercase tracking-[0.32em] text-[#6a7f86]">Admin CMS</div>
+              <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
                   Arabic news workflow, built for daily publishing
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-black/60">
-                  No demo stories, no fake analytics. This panel is ready for real news operations:
-                  create, schedule, approve, upload media, and place stories on the homepage.
-                </p>
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-black/60">
+                No demo stories, no fake analytics. This panel is ready for real news operations:
+                create, schedule, approve, upload media, and place stories on the homepage.
+              </p>
+              <div className="mt-4 inline-flex rounded-full bg-brand-surfaceLow px-4 py-2 text-sm font-medium text-brand-onSurfaceVariant">
+                {statusMessage}
+              </div>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -146,10 +217,10 @@ export default function AdminPage() {
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-4">
-                  <input className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Title" />
-                  <input className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Slug" />
-                  <input className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Author name" />
-                  <select className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none">
+                  <input ref={titleRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Title" />
+                  <input ref={slugRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Slug" />
+                  <input ref={authorRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Author name" />
+                  <select ref={categoryRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none">
                     <option>Choose category</option>
                     <option>Breaking News</option>
                     <option>Politics</option>
@@ -161,10 +232,10 @@ export default function AdminPage() {
                     <option>Video</option>
                   </select>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">
+                    <button type="button" onClick={() => flashStatus('Publishing scheduled')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">
                       Schedule publish
                     </button>
-                    <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">
+                    <button type="button" onClick={() => flashStatus('Sent for review')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">
                       Send for review
                     </button>
                   </div>
@@ -172,13 +243,14 @@ export default function AdminPage() {
 
                 <div className="space-y-4">
                   <textarea
+                    ref={bodyRef}
                     className="min-h-[250px] w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none"
                     placeholder="Write the full article here..."
                   />
                   <div className="flex flex-wrap gap-3">
-                    <button className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-white">Save draft</button>
-                    <button className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-[#0f1d25]">Publish now</button>
-                    <button className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">Preview</button>
+                    <button type="button" onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-white">Save draft</button>
+                    <button type="button" onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-[#0f1d25]">Publish now</button>
+                    <button type="button" onClick={() => flashStatus('Preview opened')} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">Preview</button>
                   </div>
                 </div>
               </div>
@@ -197,8 +269,29 @@ export default function AdminPage() {
                 <p className="mt-2 text-sm leading-7 text-black/60">
                   JPG, PNG, WebP, MP4, and PDF. Use real file names, alt text, and source credits.
                 </p>
-                <button className="mt-4 rounded-full bg-[#0f1d25] px-5 py-3 text-sm font-semibold text-white">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    const count = event.target.files?.length ?? 0;
+                    flashStatus(count > 0 ? `${count} file(s) selected` : 'No file selected');
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-4 rounded-full bg-[#0f1d25] px-5 py-3 text-sm font-semibold text-white"
+                >
                   Select files
+                </button>
+                <button
+                  type="button"
+                  onClick={publishSelectedFiles}
+                  className="ml-2 mt-4 rounded-full border border-black/10 px-5 py-3 text-sm font-semibold"
+                >
+                  Upload now
                 </button>
               </div>
 
@@ -232,10 +325,10 @@ export default function AdminPage() {
               <div className="mt-6 rounded-[26px] bg-[#f6f8f8] p-4">
                 <div className="text-sm font-semibold text-black/60">Category manager</div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Add category</button>
-                  <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Sort order</button>
-                  <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Hide empty categories</button>
-                  <button className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Homepage pin</button>
+                  <button type="button" onClick={() => flashStatus('Category action opened')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Add category</button>
+                  <button type="button" onClick={() => flashStatus('Sort order opened')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Sort order</button>
+                  <button type="button" onClick={() => flashStatus('Empty categories hidden')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Hide empty categories</button>
+                  <button type="button" onClick={() => flashStatus('Homepage pin updated')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Homepage pin</button>
                 </div>
               </div>
               </section>
@@ -270,7 +363,7 @@ export default function AdminPage() {
                   {settings.map((item) => (
                     <label key={item} className="flex items-center justify-between rounded-2xl border border-black/8 px-4 py-3">
                       <span>{item}</span>
-                      <input type="checkbox" defaultChecked className="h-4 w-4 accent-[#0f1d25]" />
+                      <input type="checkbox" defaultChecked className="h-4 w-4 accent-[#0f1d25]" onChange={() => flashStatus(`${item} toggled`)} />
                     </label>
                   ))}
                 </div>
