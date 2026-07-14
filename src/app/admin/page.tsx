@@ -67,6 +67,8 @@ export default function AdminPage() {
   const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; category: string; status: string; created_at: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverImageName, setCoverImageName] = useState<string>('');
   const localNewsKey = 'sawt-al-hind-admin-news';
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -104,10 +106,17 @@ export default function AdminPage() {
 
   const collectPayload = () => ({
     title: titleRef.current?.value.trim() ?? '',
-    slug: slugRef.current?.value.trim() ?? '',
+    slug:
+      slugRef.current?.value.trim() ||
+      `${(titleRef.current?.value ?? 'story')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\u0600-\u06ff]+/gi, '-')
+        .replace(/^-+|-+$/g, '')}-${Date.now().toString(36)}`,
     author: authorRef.current?.value.trim() ?? 'Editorial',
     category: categoryRef.current?.value ?? 'Breaking News',
-    body: bodyRef.current?.value.trim() ?? ''
+    body: bodyRef.current?.value.trim() ?? '',
+    cover_image: coverImage
   });
 
   const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
@@ -326,7 +335,24 @@ export default function AdminPage() {
                     <p className="mt-1 text-sm text-brand-onSurfaceVariant">
                       Main image shown at the top of the article and in homepage cards.
                     </p>
-                    <input ref={coverPhotoRef} type="file" accept="image/*" className="hidden" />
+                    <input
+                      ref={coverPhotoRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          setCoverImage(String(reader.result ?? ''));
+                          setCoverImageName(file.name);
+                          flashStatus(`Cover photo selected: ${file.name}`);
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" onClick={() => coverPhotoRef.current?.click()} className="rounded-full bg-[#0f1d25] px-4 py-2 text-sm font-semibold text-white">
                         Select cover photo
@@ -335,6 +361,12 @@ export default function AdminPage() {
                         Attach
                       </button>
                     </div>
+                    {coverImage ? (
+                      <div className="mt-4 overflow-hidden rounded-2xl border border-black/8 bg-white">
+                        <img src={coverImage} alt={coverImageName || 'Cover preview'} className="h-48 w-full object-cover" />
+                        <div className="px-4 py-3 text-xs text-black/60">{coverImageName || 'Selected cover image'}</div>
+                      </div>
+                    ) : null}
                   </div>
                   <textarea
                     ref={bodyRef}

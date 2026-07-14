@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     author: String(payload.author ?? 'Editorial'),
     category: String(payload.category),
     body: String(payload.body ?? ''),
+    cover_image: typeof payload.cover_image === 'string' ? payload.cover_image : null,
     status: (payload.status ?? 'draft') as 'draft' | 'published' | 'review' | 'scheduled'
   });
 

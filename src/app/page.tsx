@@ -29,7 +29,8 @@ function EmptyCard({ title, description }: { title: string; description: string 
 
 export default async function HomePage() {
   const newsResult = await listNews();
-  const liveNews = newsResult.ok ? newsResult.items.slice(0, 6) : [];
+  const publishedNews = newsResult.ok ? newsResult.items.filter((item) => item.status === 'published') : [];
+  const liveNews = (publishedNews.length > 0 ? publishedNews : newsResult.ok ? newsResult.items : []).slice(0, 6);
   const heroStory = liveNews[0];
   const latestNews = liveNews.slice(1, 5);
   const categories = Array.from(new Set(liveNews.map((item) => item.category))).slice(0, 6);
@@ -59,6 +60,11 @@ export default async function HomePage() {
         <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="overflow-hidden rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">Live newsroom shell</div>
+            {heroStory?.cover_image ? (
+              <div className="mt-4 overflow-hidden rounded-[26px] border border-black/6 bg-black/5">
+                <img src={heroStory.cover_image} alt={heroStory.title} className="h-64 w-full object-cover sm:h-80" />
+              </div>
+            ) : null}
             <h1 className="mt-3 max-w-2xl font-headline-xl-mobile text-[30px] leading-[1.28] tracking-[-0.03em] text-brand-onSurface sm:text-[42px] sm:leading-[1.15]">
               {heroStory?.title ?? 'Clean Arabic news portal layout ready for real stories'}
             </h1>
@@ -80,6 +86,7 @@ export default async function HomePage() {
                 {liveNews.slice(0, 3).map((item, index) => (
                   <div key={item.id} className="rounded-[22px] border border-black/8 bg-brand-surfaceLow p-4">
                     <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
+                    {item.cover_image ? <img src={item.cover_image} alt={item.title} className="mt-3 h-28 w-full rounded-2xl object-cover" /> : null}
                     <div className="mt-1 text-[15px] font-semibold leading-7 text-brand-onSurface">{item.title}</div>
                     <div className="mt-1 text-xs text-brand-onSurfaceVariant">#{index + 1}</div>
                   </div>
@@ -116,6 +123,7 @@ export default async function HomePage() {
                 {latestNews.map((item) => (
                   <div key={item.id} className="rounded-[22px] border border-black/8 p-4">
                     <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
+                    {item.cover_image ? <img src={item.cover_image} alt={item.title} className="mt-3 h-24 w-full rounded-2xl object-cover" /> : null}
                     <div className="mt-1 text-[15px] font-semibold leading-7 text-brand-onSurface">{item.title}</div>
                     <div className="mt-1 text-xs text-brand-onSurfaceVariant">{item.status} • {item.created_at}</div>
                   </div>
