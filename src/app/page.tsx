@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from 'next';
 import { Container } from '@/components/ui';
+import { listNews } from '@/lib/news-store';
 
 export const metadata: Metadata = {
   title: 'جريدة صوت الهند | Arabic News Portal',
@@ -26,7 +27,13 @@ function EmptyCard({ title, description }: { title: string; description: string 
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const newsResult = await listNews();
+  const liveNews = newsResult.ok ? newsResult.items.slice(0, 6) : [];
+  const heroStory = liveNews[0];
+  const latestNews = liveNews.slice(1, 5);
+  const categories = Array.from(new Set(liveNews.map((item) => item.category))).slice(0, 6);
+
   return (
     <main className="min-h-screen bg-brand-background text-brand-onSurface">
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-xl">
@@ -53,11 +60,12 @@ export default function HomePage() {
           <div className="overflow-hidden rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">Live newsroom shell</div>
             <h1 className="mt-3 max-w-2xl font-headline-xl-mobile text-[30px] leading-[1.28] tracking-[-0.03em] text-brand-onSurface sm:text-[42px] sm:leading-[1.15]">
-              Clean Arabic news portal layout ready for real stories
+              {heroStory?.title ?? 'Clean Arabic news portal layout ready for real stories'}
             </h1>
             <p className="mt-4 max-w-2xl text-[16px] leading-8 text-brand-onSurfaceVariant sm:text-[18px]">
-              All mock news, demo cards, and placeholder headlines have been removed from the homepage.
-              This is now a structured editorial shell for live content.
+              {heroStory
+                ? heroStory.body || 'Latest story loaded from Supabase and ready for your audience.'
+                : 'All mock news, demo cards, and placeholder headlines have been removed from the homepage. This is now a structured editorial shell for live content.'}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <button className="rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white">Add live news</button>
@@ -66,33 +74,67 @@ export default function HomePage() {
           </div>
 
           <aside className="rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
-            <SectionTitle title="Trending" action="Empty" />
-            <EmptyCard
-              title="No trending stories yet"
-              description="When you connect your news source or CMS, the trending rail will populate automatically."
-            />
+            <SectionTitle title="Trending" action={liveNews.length > 0 ? 'Live' : 'Empty'} />
+            {liveNews.length > 0 ? (
+              <div className="space-y-3">
+                {liveNews.slice(0, 3).map((item, index) => (
+                  <div key={item.id} className="rounded-[22px] border border-black/8 bg-brand-surfaceLow p-4">
+                    <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
+                    <div className="mt-1 text-[15px] font-semibold leading-7 text-brand-onSurface">{item.title}</div>
+                    <div className="mt-1 text-xs text-brand-onSurfaceVariant">#{index + 1}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyCard
+                title="No trending stories yet"
+                description="When you connect your news source or CMS, the trending rail will populate automatically."
+              />
+            )}
           </aside>
         </section>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <EmptyCard title="Featured story" description="This space will display the lead article from your newsroom." />
+          {heroStory ? (
+            <div className="rounded-[26px] border border-black/8 bg-white p-6 shadow-[0_10px_30px_rgba(17,24,39,0.04)]">
+              <div className="text-xs font-semibold text-brand-primary">Featured story</div>
+              <div className="mt-3 text-[18px] font-semibold text-brand-onSurface">{heroStory.title}</div>
+              <p className="mt-2 text-sm leading-7 text-brand-onSurfaceVariant">{heroStory.body || 'Featured article from Supabase.'}</p>
+            </div>
+          ) : (
+            <EmptyCard title="Featured story" description="This space will display the lead article from your newsroom." />
+          )}
           <EmptyCard title="Breaking news" description="Use this block for urgent updates and live headlines." />
           <EmptyCard title="Video / Live" description="Reserve this area for live shows, clips, and major events." />
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
           <div className="rounded-[30px] border border-black/6 bg-white p-5 shadow-[0_12px_35px_rgba(17,24,39,0.05)] sm:p-6">
-            <SectionTitle title="Latest news" action="Empty" />
-            <EmptyCard title="No live news items" description="This block will fill with your latest published articles automatically." />
+            <SectionTitle title="Latest news" action={latestNews.length > 0 ? 'Live' : 'Empty'} />
+            {latestNews.length > 0 ? (
+              <div className="space-y-3">
+                {latestNews.map((item) => (
+                  <div key={item.id} className="rounded-[22px] border border-black/8 p-4">
+                    <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
+                    <div className="mt-1 text-[15px] font-semibold leading-7 text-brand-onSurface">{item.title}</div>
+                    <div className="mt-1 text-xs text-brand-onSurfaceVariant">{item.status} • {item.created_at}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyCard title="No live news items" description="This block will fill with your latest published articles automatically." />
+            )}
           </div>
 
           <div className="rounded-[30px] border border-black/6 bg-white p-5 shadow-[0_12px_35px_rgba(17,24,39,0.05)] sm:p-6">
-            <SectionTitle title="Categories" action="Empty" />
+            <SectionTitle title="Categories" action={categories.length > 0 ? 'Live' : 'Empty'} />
             <div className="grid gap-3 sm:grid-cols-2">
-              {['News', 'Politics', 'World', 'Economy', 'Sports', 'Culture'].map((item) => (
+              {(categories.length > 0 ? categories : ['News', 'Politics', 'World', 'Economy', 'Sports', 'Culture']).map((item) => (
                 <div key={item} className="rounded-[22px] border border-dashed border-black/10 bg-brand-surfaceLow p-4">
                   <div className="text-sm font-semibold text-brand-onSurface">{item}</div>
-                  <div className="mt-1 text-xs text-brand-onSurfaceVariant">Ready for live category feeds</div>
+                  <div className="mt-1 text-xs text-brand-onSurfaceVariant">
+                    {categories.length > 0 ? 'Connected to live posts' : 'Ready for live category feeds'}
+                  </div>
                 </div>
               ))}
             </div>
@@ -100,7 +142,7 @@ export default function HomePage() {
         </section>
 
         <section className="mt-8 rounded-[30px] border border-black/6 bg-white p-5 shadow-[0_12px_35px_rgba(17,24,39,0.05)] sm:p-6">
-          <SectionTitle title="Homepage blocks" action="Empty" />
+          <SectionTitle title="Homepage blocks" action={newsResult.ok && liveNews.length > 0 ? 'Live' : 'Empty'} />
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <EmptyCard title="Top strip" description="Breaking ticker or latest highlights." />
             <EmptyCard title="Main story" description="The lead news card will go here." />
