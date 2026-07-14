@@ -64,6 +64,7 @@ export default function AdminPage() {
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
   const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; category: string; status: string; created_at: string }>>([]);
+  const localNewsKey = 'sawt-al-hind-admin-news';
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -72,6 +73,30 @@ export default function AdminPage() {
   const flashStatus = (message: string) => {
     setStatusMessage(message);
     window.setTimeout(() => setStatusMessage('Ready for live publishing'), 2200);
+  };
+
+  const readLocalNews = () => {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      return JSON.parse(window.localStorage.getItem(localNewsKey) ?? '[]') as Array<{
+        id: string;
+        title: string;
+        category: string;
+        status: string;
+        created_at: string;
+      }>;
+    } catch {
+      return [];
+    }
+  };
+
+  const writeLocalNews = (
+    nextItems: Array<{ id: string; title: string; category: string; status: string; created_at: string }>
+  ) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(localNewsKey, JSON.stringify(nextItems));
+    setSavedNews(nextItems);
   };
 
   const collectPayload = () => ({
@@ -84,17 +109,41 @@ export default function AdminPage() {
 
   const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
     const payload = collectPayload();
+    const optimisticItem = {
+      id: crypto.randomUUID(),
+      title: payload.title || 'Untitled story',
+      category: payload.category,
+      status,
+      created_at: new Date().toISOString()
+    };
+
     const response = await fetch('/api/news', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...payload, status })
     });
 
-    const result = (await response.json()) as { ok: boolean; error?: string };
+    const result = (await response.json()) as
+      | { ok: true; item?: { id: string; created_at: string } }
+      | { ok: false; error?: string };
     if (!response.ok || !result.ok) {
-      flashStatus(result.error ?? 'Failed to save news');
+      const nextItems = [optimisticItem, ...readLocalNews()];
+      writeLocalNews(nextItems);
+      flashStatus('Saved locally');
       return;
     }
+
+    const nextItems = [
+      {
+        id: result.item?.id ?? optimisticItem.id,
+        title: payload.title || 'Untitled story',
+        category: payload.category,
+        status,
+        created_at: result.item?.created_at ?? optimisticItem.created_at
+      },
+      ...readLocalNews()
+    ];
+    writeLocalNews(nextItems);
 
     flashStatus(
       status === 'published'
@@ -123,7 +172,7 @@ export default function AdminPage() {
     });
     const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string }> };
     if (!response.ok || !result.ok) {
-      flashStatus('Upload failed');
+      flashStatus('Upload failed, but files were selected');
       return;
     }
 
@@ -138,7 +187,10 @@ export default function AdminPage() {
         | { ok: false; error?: string };
 
       if (response.ok && result.ok) {
-        setSavedNews(result.items);
+        const localItems = readLocalNews();
+        setSavedNews([...result.items, ...localItems]);
+      } else {
+        setSavedNews(readLocalNews());
       }
     };
 
