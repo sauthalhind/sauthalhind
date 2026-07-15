@@ -16,7 +16,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${title} | جريدة صوت الهند`,
     description: 'Arabic news article page with share controls.',
-    alternates: { canonical: `/news/${slug}` }
+    alternates: { canonical: `/news/${slug}` },
+    openGraph: {
+      title,
+      description: 'Arabic news article page with share controls.',
+      type: 'article',
+      url: `/news/${slug}`
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: 'Arabic news article page with share controls.'
+    }
   };
 }
 
@@ -30,10 +41,38 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
   const article = result.item;
   const url = `https://sawtalhind.vercel.app/news/${article.slug}`;
+  const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();
 
   return (
     <main className="min-h-screen bg-brand-background text-brand-onSurface">
       <Container className="py-8">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'NewsArticle',
+              headline: article.title,
+              description: article.body?.slice(0, 160) || article.title,
+              datePublished: publishedDate,
+              dateModified: publishedDate,
+              author: {
+                '@type': 'Person',
+                name: article.author
+              },
+              publisher: {
+                '@type': 'Organization',
+                name: 'جريدة صوت الهند',
+                logo: {
+                  '@type': 'ImageObject',
+                  url: 'https://sawtalhind.news/sauthalhind.png'
+                }
+              },
+              image: article.cover_image ? [article.cover_image] : undefined,
+              mainEntityOfPage: `https://sawtalhind.news/news/${article.slug}`
+            })
+          }}
+        />
         <article className="mx-auto max-w-4xl overflow-hidden rounded-[32px] border border-black/6 bg-white shadow-[0_18px_55px_rgba(17,24,39,0.06)]">
           {article.cover_image ? <img src={article.cover_image} alt={article.title} className="h-72 w-full object-cover sm:h-[460px]" /> : null}
           <div className="p-5 sm:p-8">
