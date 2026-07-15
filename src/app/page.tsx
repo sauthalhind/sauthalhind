@@ -56,6 +56,9 @@ export default async function HomePage() {
             <div className="mt-2 inline-flex rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant">
               Data source: {dataSource}
             </div>
+            <p className="mt-2 text-xs text-brand-onSurfaceVariant">
+              Published stories appear here only when they are saved to Supabase with status published.
+            </p>
             {heroStory?.cover_image ? (
               <div className="mt-4 overflow-hidden rounded-[26px] border border-black/6 bg-black/5">
                 <img src={heroStory.cover_image} alt={heroStory.title} className="h-64 w-full object-cover sm:h-80" />

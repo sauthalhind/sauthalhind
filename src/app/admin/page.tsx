@@ -71,6 +71,7 @@ export default function AdminPage() {
   const [coverImageName, setCoverImageName] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
+  const [debugInfo, setDebugInfo] = useState<{ supabaseConfigured: boolean; newsSource: string; newsCount: number; newsError: string | null; timestamp: string } | null>(null);
   const localNewsKey = 'sawt-al-hind-admin-news';
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -330,6 +331,25 @@ export default function AdminPage() {
     void loadNews();
   }, []);
 
+  useEffect(() => {
+    const loadDebug = async () => {
+      try {
+        const response = await fetch('/api/debug');
+        const result = (await response.json()) as
+          | { ok: true; diagnostics: { supabaseConfigured: boolean; newsSource: string; newsCount: number; newsError: string | null; timestamp: string } }
+          | { ok: false };
+
+        if (response.ok && result.ok) {
+          setDebugInfo(result.diagnostics);
+        }
+      } catch {
+        setDebugInfo(null);
+      }
+    };
+
+    void loadDebug();
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#f4f7f6] text-[#132126]">
       <div className="grid min-h-screen lg:grid-cols-[300px_1fr]">
@@ -389,6 +409,15 @@ export default function AdminPage() {
               <div className="mt-2 inline-flex rounded-full bg-[#eef4f4] px-4 py-2 text-xs font-semibold text-[#0f1d25]">
                 Data source: {dataSource}
               </div>
+              {debugInfo ? (
+                <div className="mt-2 rounded-2xl border border-black/8 bg-[#f7faf9] px-4 py-3 text-xs leading-6 text-black/70">
+                  <div className="font-semibold text-[#0f1d25]">Connection check</div>
+                  <div>Supabase connected: {debugInfo.supabaseConfigured ? 'Yes' : 'No'}</div>
+                  <div>News source: {debugInfo.newsSource}</div>
+                  <div>News rows: {debugInfo.newsCount}</div>
+                  {debugInfo.newsError ? <div className="text-red-600">Error: {debugInfo.newsError}</div> : null}
+                </div>
+              ) : null}
               </div>
 
               <div className="flex flex-wrap gap-3">
