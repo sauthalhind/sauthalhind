@@ -25,6 +25,7 @@ export default async function HomePage() {
   const heroStory = liveNews[0];
   const latestNews = liveNews.slice(1, 5);
   const categories = Array.from(new Set(liveNews.map((item) => item.category))).slice(0, 6);
+  const dataSource = newsResult.ok ? newsResult.source : 'error';
 
   return (
     <main className="min-h-screen bg-brand-background text-brand-onSurface">
@@ -52,6 +53,9 @@ export default async function HomePage() {
         <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="overflow-hidden rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">Live newsroom shell</div>
+            <div className="mt-2 inline-flex rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant">
+              Data source: {dataSource}
+            </div>
             {heroStory?.cover_image ? (
               <div className="mt-4 overflow-hidden rounded-[26px] border border-black/6 bg-black/5">
                 <img src={heroStory.cover_image} alt={heroStory.title} className="h-64 w-full object-cover sm:h-80" />

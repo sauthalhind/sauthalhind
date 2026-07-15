@@ -70,6 +70,7 @@ export default function AdminPage() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageName, setCoverImageName] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
   const localNewsKey = 'sawt-al-hind-admin-news';
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -307,10 +308,11 @@ export default function AdminPage() {
     const loadNews = async () => {
       const response = await fetch('/api/news');
       const result = (await response.json()) as
-        | { ok: true; items: Array<{ id: string; title: string; slug?: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }> }
+        | { ok: true; items: Array<{ id: string; title: string; slug?: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>; source?: string }
         | { ok: false; error?: string };
 
       if (response.ok && result.ok) {
+        setDataSource(result.source === 'fallback' ? 'fallback' : 'supabase');
         const localItems = readLocalNews();
         setSavedNews([
           ...result.items.map((item) => ({
@@ -320,6 +322,7 @@ export default function AdminPage() {
           ...localItems
         ]);
       } else {
+        setDataSource('fallback');
         setSavedNews(readLocalNews());
       }
     };
@@ -382,6 +385,9 @@ export default function AdminPage() {
               </p>
               <div className="mt-4 inline-flex rounded-full bg-brand-surfaceLow px-4 py-2 text-sm font-medium text-brand-onSurfaceVariant">
                 {statusMessage}
+              </div>
+              <div className="mt-2 inline-flex rounded-full bg-[#eef4f4] px-4 py-2 text-xs font-semibold text-[#0f1d25]">
+                Data source: {dataSource}
               </div>
               </div>
 
