@@ -329,7 +329,7 @@ export default function AdminPage() {
         <aside className="border-b border-black/8 bg-[#0f1d25] text-white lg:border-b-0 lg:border-l lg:border-black/8">
           <div className="p-6">
             <div className="rounded-[28px] border border-white/10 bg-white/6 p-5">
-              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-16 w-16 object-contain shadow-sm" />
               <div className="text-xs uppercase tracking-[0.32em] text-white/55">Sawt Al-Hind News</div>
               <div className="mt-2 text-3xl font-bold leading-tight">???? ??????</div>
               <p className="mt-3 text-sm leading-7 text-white/70">
@@ -364,7 +364,7 @@ export default function AdminPage() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
               <div className="mb-3 flex items-center gap-3">
-                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-14 w-14 rounded-2xl object-cover shadow-sm" />
+                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-14 w-14 object-contain shadow-sm" />
                 <div>
               <div className="text-xs font-semibold uppercase tracking-[0.32em] text-[#6a7f86]">Admin CMS</div>
               <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">

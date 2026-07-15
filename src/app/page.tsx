@@ -45,7 +45,7 @@ export default async function HomePage() {
               <img
                 src="/sauthalhind.png"
                 alt="Sauthalhind logo"
-                className="h-12 w-12 rounded-2xl object-cover shadow-sm"
+                className="h-12 w-12 object-contain shadow-sm"
               />
               <div>
                 <div className="font-headline-md text-[18px] font-semibold tracking-[-0.02em] text-brand-primary sm:text-[22px]">جريدة صوت الهند</div>
@@ -170,7 +170,7 @@ export default async function HomePage() {
           <div className="grid gap-8 md:grid-cols-[1.3fr_1fr_1fr]">
             <div>
               <div className="flex items-center gap-3">
-                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-12 w-12 rounded-2xl object-cover" />
+                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-12 w-12 object-contain" />
                 <div className="font-headline-md text-[22px] font-semibold text-brand-primary">جريدة صوت الهند</div>
               </div>
               <p className="mt-3 max-w-md text-sm leading-7 text-brand-onSurfaceVariant">
