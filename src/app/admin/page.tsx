@@ -331,9 +331,9 @@ export default function AdminPage() {
             <div className="rounded-[28px] border border-white/10 bg-white/6 p-5">
               <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-16 w-16 object-contain shadow-sm" />
               <div className="text-xs uppercase tracking-[0.32em] text-white/55">Sawt Al-Hind News</div>
-              <div className="mt-2 text-3xl font-bold leading-tight">???? ??????</div>
+              <div className="mt-2 text-3xl font-bold leading-tight">Admin CMS</div>
               <p className="mt-3 text-sm leading-7 text-white/70">
-                ????? ??????? ???????? ?????? ???????? ???????? ???????? ?????? ?? ???? ????.
+                Manage live news, drafts, categories, media, and approvals from one clean dashboard.
               </p>
             </div>
           </div>
@@ -366,10 +366,10 @@ export default function AdminPage() {
               <div className="mb-3 flex items-center gap-3">
                 <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-14 w-14 object-contain shadow-sm" />
                 <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.32em] text-[#6a7f86]">Admin CMS</div>
-              <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-                  Arabic news workflow, built for daily publishing
-              </h1>
+                  <div className="text-xs font-semibold uppercase tracking-[0.32em] text-[#6a7f86]">Admin CMS</div>
+                  <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+                    Arabic news workflow, built for daily publishing
+                  </h1>
                 </div>
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-black/60">
