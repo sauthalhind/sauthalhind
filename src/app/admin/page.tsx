@@ -248,13 +248,17 @@ export default function AdminPage() {
       method: 'POST',
       body: formData
     });
-    const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string }> };
+    const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string; url?: string }> };
     if (!response.ok || !result.ok) {
       flashStatus('Upload failed, but files were selected');
       setIsUploading(false);
       return;
     }
 
+    const firstUrl = result.uploaded?.[0]?.url;
+    if (firstUrl) {
+      setCoverImage(firstUrl);
+    }
     setIsUploading(false);
     flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
   };
@@ -456,13 +460,27 @@ export default function AdminPage() {
                         const file = event.target.files?.[0];
                         if (!file) return;
 
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          setCoverImage(String(reader.result ?? ''));
-                          setCoverImageName(file.name);
-                          flashStatus(`Cover photo selected: ${file.name}`);
-                        };
-                        reader.readAsDataURL(file);
+                        setCoverImageName(file.name);
+                        const formData = new FormData();
+                        formData.append('bucket', 'news-media');
+                        formData.append('files', file);
+
+                        const response = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formData
+                        });
+                        const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
+
+                        if (!response.ok || !result.ok) {
+                          flashStatus(result.error ?? 'Cover photo upload failed');
+                          return;
+                        }
+
+                        const url = result.uploaded?.[0]?.url;
+                        if (url) {
+                          setCoverImage(url);
+                          flashStatus(`Cover photo uploaded: ${file.name}`);
+                        }
                       }}
                     />
                     <div className="mt-3 flex flex-wrap gap-2">
