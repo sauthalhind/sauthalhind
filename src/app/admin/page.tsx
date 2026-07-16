@@ -111,6 +111,23 @@ export default function AdminPage() {
     setSavedNews(nextItems);
   };
 
+  const normalizeNewsItem = (
+    item: {
+      id: string;
+      title: string;
+      slug?: string;
+      category: string;
+      status: string;
+      created_at: string;
+      cover_image?: string | null;
+      body?: string;
+      author?: string;
+    }
+  ) => ({
+    ...item,
+    slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-')
+  });
+
   const collectPayload = () => ({
     title: titleRef.current?.value.trim() ?? '',
     slug:
@@ -165,73 +182,79 @@ export default function AdminPage() {
     };
 
     setIsSaving(true);
-    const localItems = readLocalNews();
-    writeLocalNews(
-      editingId ? localItems.map((item) => (item.id === editingId ? { ...item, ...optimisticItem } : item)) : [optimisticItem, ...localItems]
-    );
-    flashStatus(status === 'published' ? 'Publishing...' : editingId ? 'Saving changes...' : 'Saving draft...');
+    try {
+      const localItems = readLocalNews();
+      const nextLocalItems = editingId
+        ? localItems.map((item) => (item.id === editingId ? { ...item, ...optimisticItem } : item))
+        : [optimisticItem, ...localItems];
+      writeLocalNews(nextLocalItems);
+      flashStatus(status === 'published' ? 'Publishing...' : editingId ? 'Saving changes...' : 'Saving draft...');
 
-    const response = await fetch('/api/news', {
-      method: editingId ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingId ? { id: editingId, ...payload, status } : { ...payload, status })
-    });
+      const response = await fetch('/api/news', {
+        method: editingId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingId ? { id: editingId, ...payload, status } : { ...payload, status })
+      });
 
-    const result = (await response.json()) as
-      | { ok: true; item?: { id: string; created_at: string; slug?: string; author?: string; body?: string; cover_image?: string | null } }
-      | { ok: false; error?: string };
-    if (!response.ok || !result.ok) {
-      flashStatus('Saved locally');
+      const result = (await response.json()) as
+        | { ok: true; item?: { id: string; created_at: string; slug?: string; author?: string; body?: string; cover_image?: string | null } }
+        | { ok: false; error?: string };
+      if (!response.ok || !result.ok) {
+        flashStatus(result && !result.ok ? result.error ?? 'Saved locally' : 'Saved locally');
+        return;
+      }
+
+      const currentItems = readLocalNews();
+      const nextItems = editingId
+        ? currentItems.map((item) =>
+            item.id === editingId
+              ? {
+                  ...item,
+                  id: result.item?.id ?? optimisticItem.id,
+                  title: payload.title || 'Untitled story',
+                  slug: payload.slug,
+                  author: payload.author,
+                  category: payload.category,
+                  body: payload.body,
+                  cover_image: payload.cover_image,
+                  status,
+                  created_at: result.item?.created_at ?? optimisticItem.created_at
+                }
+              : item
+          )
+        : [
+            {
+              id: result.item?.id ?? optimisticItem.id,
+              title: payload.title || 'Untitled story',
+              slug: payload.slug,
+              author: payload.author,
+              category: payload.category,
+              body: payload.body,
+              cover_image: payload.cover_image,
+              status,
+              created_at: result.item?.created_at ?? optimisticItem.created_at
+            },
+            ...currentItems
+          ];
+      writeLocalNews(nextItems);
+      setEditingId(null);
+      flashStatus(
+        status === 'published'
+          ? 'Published to backend'
+          : status === 'review'
+            ? 'Sent to review queue'
+            : status === 'scheduled'
+              ? 'Publish scheduled'
+              : editingId
+                ? 'Changes saved to backend'
+                : 'Draft saved to backend'
+      );
+    } catch (error) {
+      console.error('saveNews failed', error);
+      flashStatus('Saved locally only');
+    } finally {
       setIsSaving(false);
-      return;
     }
-
-    const nextItems = editingId
-      ? readLocalNews().map((item) =>
-          item.id === editingId
-            ? {
-                ...item,
-                id: result.item?.id ?? optimisticItem.id,
-                title: payload.title || 'Untitled story',
-                slug: payload.slug,
-                author: payload.author,
-                category: payload.category,
-                body: payload.body,
-                cover_image: payload.cover_image,
-                status,
-                created_at: result.item?.created_at ?? optimisticItem.created_at
-              }
-            : item
-        )
-      : [
-          {
-            id: result.item?.id ?? optimisticItem.id,
-            title: payload.title || 'Untitled story',
-            slug: payload.slug,
-            author: payload.author,
-            category: payload.category,
-            body: payload.body,
-            cover_image: payload.cover_image,
-            status,
-            created_at: result.item?.created_at ?? optimisticItem.created_at
-          },
-          ...readLocalNews()
-        ];
-    writeLocalNews(nextItems);
-
-    setIsSaving(false);
-    setEditingId(null);
-    flashStatus(
-      status === 'published'
-        ? 'Published to backend'
-        : status === 'review'
-          ? 'Sent to review queue'
-          : status === 'scheduled'
-            ? 'Publish scheduled'
-            : editingId
-              ? 'Changes saved to backend'
-              : 'Draft saved to backend'
-    );
   };
 
   const publishSelectedFiles = async () => {
@@ -242,88 +265,103 @@ export default function AdminPage() {
     }
 
     setIsUploading(true);
-    flashStatus('Uploading files...');
-    const formData = new FormData();
-    Array.from(files).forEach((file) => formData.append('files', file));
+    try {
+      flashStatus('Uploading files...');
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append('files', file));
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData
-    });
-    const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string; url?: string }> };
-    if (!response.ok || !result.ok) {
-      flashStatus('Upload failed, but files were selected');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string; url?: string }>; error?: string };
+      if (!response.ok || !result.ok) {
+        flashStatus(result.error ?? 'Upload failed');
+        return;
+      }
+
+      const firstUrl = result.uploaded?.[0]?.url;
+      if (firstUrl) {
+        setCoverImage(firstUrl);
+      }
+      flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
+    } catch (error) {
+      console.error('publishSelectedFiles failed', error);
+      flashStatus('Upload failed');
+    } finally {
       setIsUploading(false);
-      return;
     }
-
-    const firstUrl = result.uploaded?.[0]?.url;
-    if (firstUrl) {
-      setCoverImage(firstUrl);
-    }
-    setIsUploading(false);
-    flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
   };
 
   const removeNews = async (id: string) => {
     setIsSaving(true);
-    const response = await fetch(`/api/news?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    const result = (await response.json()) as { ok: boolean; error?: string };
+    try {
+      const response = await fetch(`/api/news?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const result = (await response.json()) as { ok: boolean; error?: string };
 
-    if (!response.ok || !result.ok) {
-      flashStatus(result.error ?? 'Delete failed');
+      if (!response.ok || !result.ok) {
+        flashStatus(result.error ?? 'Delete failed');
+        return;
+      }
+
+      writeLocalNews(readLocalNews().filter((item) => item.id !== id));
+      if (editingId === id) {
+        resetEditor();
+      }
+      flashStatus('News deleted');
+    } catch (error) {
+      console.error('removeNews failed', error);
+      flashStatus('Delete failed');
+    } finally {
       setIsSaving(false);
-      return;
     }
-
-    writeLocalNews(readLocalNews().filter((item) => item.id !== id));
-    if (editingId === id) {
-      resetEditor();
-    }
-    setIsSaving(false);
-    flashStatus('News deleted');
   };
 
   const togglePublicDraft = async (item: { id: string; status: string }) => {
     const nextStatus = item.status === 'published' ? 'draft' : 'published';
     setIsSaving(true);
-    const response = await fetch('/api/news', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: item.id, status: nextStatus })
-    });
-    const result = (await response.json()) as { ok: boolean; error?: string };
+    try {
+      const response = await fetch('/api/news', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, status: nextStatus })
+      });
+      const result = (await response.json()) as { ok: boolean; error?: string };
 
-    if (!response.ok || !result.ok) {
-      flashStatus(result.error ?? 'Status update failed');
+      if (!response.ok || !result.ok) {
+        flashStatus(result.error ?? 'Status update failed');
+        return;
+      }
+
+      writeLocalNews(readLocalNews().map((news) => (news.id === item.id ? { ...news, status: nextStatus } : news)));
+      flashStatus(nextStatus === 'published' ? 'Marked public' : 'Saved as draft');
+    } catch (error) {
+      console.error('togglePublicDraft failed', error);
+      flashStatus('Status update failed');
+    } finally {
       setIsSaving(false);
-      return;
     }
-
-    writeLocalNews(readLocalNews().map((news) => (news.id === item.id ? { ...news, status: nextStatus } : news)));
-    setIsSaving(false);
-    flashStatus(nextStatus === 'published' ? 'Marked public' : 'Saved as draft');
   };
 
   useEffect(() => {
     const loadNews = async () => {
-      const response = await fetch('/api/news');
-      const result = (await response.json()) as
-        | { ok: true; items: Array<{ id: string; title: string; slug?: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>; source?: string }
-        | { ok: false; error?: string };
+      try {
+        const response = await fetch('/api/news', { cache: 'no-store' });
+        const result = (await response.json()) as
+          | { ok: true; items: Array<{ id: string; title: string; slug?: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>; source?: string }
+          | { ok: false; error?: string };
 
-      if (response.ok && result.ok) {
-        setDataSource(result.source === 'fallback' ? 'fallback' : 'supabase');
-        const localItems = readLocalNews();
-        setSavedNews([
-          ...result.items.map((item) => ({
-            ...item,
-            slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-')
-          })),
-          ...localItems
-        ]);
-      } else {
-        setDataSource('fallback');
+        if (response.ok && result.ok) {
+          setDataSource(result.source === 'fallback' ? 'fallback' : 'supabase');
+          const localItems = readLocalNews();
+          setSavedNews([...result.items.map(normalizeNewsItem), ...localItems]);
+        } else {
+          setDataSource('fallback');
+          setSavedNews(readLocalNews());
+        }
+      } catch (error) {
+        console.error('loadNews failed', error);
+        setDataSource('error');
         setSavedNews(readLocalNews());
       }
     };
