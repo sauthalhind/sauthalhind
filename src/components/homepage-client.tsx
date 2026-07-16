@@ -16,8 +16,6 @@ type NewsItem = {
   author?: string;
 };
 
-const localNewsKey = 'sawt-al-hind-admin-news';
-
 function SectionTitle({ title, action }: { title: string; action?: string }) {
   return (
     <div className="mb-4 flex items-end justify-between border-b border-black/8 pb-3">
@@ -27,31 +25,19 @@ function SectionTitle({ title, action }: { title: string; action?: string }) {
   );
 }
 
-function readLocalNews(): NewsItem[] {
-  if (typeof window === 'undefined') return [];
-
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(localNewsKey) ?? '[]') as NewsItem[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+function normalizeNewsItem(item: NewsItem) {
+  return { ...item, slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-') };
 }
 
 export default function HomePageClient() {
-  const [apiNews, setApiNews] = useState<NewsItem[]>([]);
-  const [localNews, setLocalNews] = useState<NewsItem[]>([]);
-  const [sourceState, setSourceState] = useState<'loading' | 'supabase' | 'local' | 'mixed' | 'fallback' | 'error'>('loading');
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [sourceState, setSourceState] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
   const [message, setMessage] = useState('Loading live newsroom...');
+  const [lastSync, setLastSync] = useState('');
 
   useEffect(() => {
-    const syncLocal = () => setLocalNews(readLocalNews());
-    syncLocal();
-    window.addEventListener('storage', syncLocal);
-    return () => window.removeEventListener('storage', syncLocal);
-  }, []);
+    let mounted = true;
 
-  useEffect(() => {
     const loadNews = async () => {
       try {
         const response = await fetch('/api/news', { cache: 'no-store' });
@@ -59,60 +45,59 @@ export default function HomePageClient() {
           | { ok: true; items: NewsItem[]; source?: string }
           | { ok: false; error?: string };
 
+        if (!mounted) return;
+
         if (response.ok && result.ok) {
-          const normalized = result.items.map((item) => ({
-            ...item,
-            slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-')
-          }));
-          setApiNews(normalized);
-          setMessage(result.source === 'fallback' ? 'Using local fallback data' : 'Connected to Supabase live data');
+          const published = result.items.map(normalizeNewsItem).filter((item) => item.status === 'published');
+          setNews(published);
+          setSourceState(result.source === 'fallback' ? 'fallback' : 'supabase');
+          setMessage(result.source === 'fallback' ? 'Using fallback data' : 'Connected to Supabase live data');
+          setLastSync(new Date().toISOString());
         } else {
-          setApiNews([]);
-          setMessage('Supabase data unavailable, using browser cache');
+          setNews([]);
+          setSourceState('fallback');
+          setMessage('No published stories available yet');
         }
       } catch {
-        setApiNews([]);
-        setMessage('Supabase request failed, using browser cache');
+        if (!mounted) return;
+        setNews([]);
+        setSourceState('error');
+        setMessage('Unable to load live news');
       }
     };
 
-    void loadNews();
+    const refresh = () => void loadNews();
+    const interval = window.setInterval(refresh, 15000);
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sawt-al-hind-news') : null;
+
+    window.addEventListener('news-updated', refresh as EventListener);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    channel?.addEventListener('message', refresh as EventListener);
+
+    refresh();
+
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('news-updated', refresh as EventListener);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+      channel?.removeEventListener('message', refresh as EventListener);
+      channel?.close();
+    };
   }, []);
 
-  const mergedPublishedNews = useMemo(() => {
-    const publishedApi = apiNews.filter((item) => item.status === 'published');
-    const publishedLocal = localNews.filter((item) => item.status === 'published');
-    const map = new Map<string, NewsItem>();
+  const heroStory = news[0];
+  const latestNews = news.slice(1, 5);
+  const categories = Array.from(new Set(news.map((item) => item.category))).slice(0, 6);
 
-    [...publishedApi, ...publishedLocal].forEach((item) => {
-      map.set(item.id, item);
-      if (item.slug) {
-        map.set(item.slug, item);
-      }
-    });
-
-    return Array.from(map.values()).filter((item) => item.id === map.get(item.id)?.id).slice(0, 12);
-  }, [apiNews, localNews]);
-
-  useEffect(() => {
-    if (apiNews.length > 0 && localNews.length > 0) {
-      setSourceState('mixed');
-    } else if (apiNews.length > 0) {
-      setSourceState('supabase');
-    } else if (localNews.length > 0) {
-      setSourceState('local');
-    } else if (message.toLowerCase().includes('fallback')) {
-      setSourceState('fallback');
-    } else if (message.toLowerCase().includes('failed')) {
-      setSourceState('fallback');
-    } else if (message) {
-      setSourceState('error');
-    }
-  }, [apiNews.length, localNews.length, message]);
-
-  const heroStory = mergedPublishedNews[0];
-  const latestNews = mergedPublishedNews.slice(1, 5);
-  const categories = Array.from(new Set(mergedPublishedNews.map((item) => item.category))).slice(0, 6);
+  const sourceLabel = useMemo(() => {
+    if (sourceState === 'loading') return 'loading';
+    if (sourceState === 'supabase') return 'supabase';
+    if (sourceState === 'fallback') return 'fallback';
+    return 'error';
+  }, [sourceState]);
 
   return (
     <main className="min-h-screen bg-brand-background text-brand-onSurface">
@@ -129,12 +114,8 @@ export default function HomePageClient() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Link href="/en" className="rounded-full border border-black/8 bg-white px-3 py-2 text-sm font-medium text-brand-onSurfaceVariant shadow-sm">
-                EN
-              </Link>
-              <Link href="/search" aria-label="Search" className="rounded-full border border-black/8 bg-white p-2 text-brand-onSurfaceVariant shadow-sm">
-                ⌕
-              </Link>
+              <Link href="/en" className="rounded-full border border-black/8 bg-white px-3 py-2 text-sm font-medium text-brand-onSurfaceVariant shadow-sm">EN</Link>
+              <Link href="/search" aria-label="Search" className="rounded-full border border-black/8 bg-white p-2 text-brand-onSurfaceVariant shadow-sm">⌕</Link>
             </div>
           </div>
         </Container>
@@ -144,38 +125,29 @@ export default function HomePageClient() {
         <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="overflow-hidden rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">Live newsroom shell</div>
-            <div className="mt-2 inline-flex rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant">
-              Data source: {sourceState}
-            </div>
+            <div className="mt-2 inline-flex rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant">Data source: {sourceLabel}</div>
             <p className="mt-2 text-xs text-brand-onSurfaceVariant">{message}</p>
+            {lastSync ? <p className="mt-1 text-[11px] text-black/40">Last sync: {lastSync}</p> : null}
             {heroStory?.cover_image ? (
               <div className="mt-4 overflow-hidden rounded-[26px] border border-black/6 bg-black/5">
                 <img src={heroStory.cover_image} alt={heroStory.title} className="h-64 w-full object-cover sm:h-80" />
               </div>
             ) : null}
-            <h1 className="mt-3 max-w-2xl font-headline-xl-mobile text-[30px] leading-[1.28] tracking-[-0.03em] text-brand-onSurface sm:text-[42px] sm:leading-[1.15]">
-              {heroStory?.title ?? 'Publish your first live story from the admin portal'}
-            </h1>
+            <h1 className="mt-3 max-w-2xl font-headline-xl-mobile text-[30px] leading-[1.28] tracking-[-0.03em] text-brand-onSurface sm:text-[42px] sm:leading-[1.15]">{heroStory?.title ?? 'Publish your first live story from the admin portal'}</h1>
             <p className="mt-4 max-w-2xl text-[16px] leading-8 text-brand-onSurfaceVariant sm:text-[18px]">
-              {heroStory
-                ? heroStory.body || 'Latest story loaded from Supabase and ready for your audience.'
-                : 'No live news yet. After publishing from admin, the latest story will show here automatically.'}
+              {heroStory ? heroStory.body || 'Latest story loaded from Supabase and ready for your audience.' : 'No live news yet. After publishing from admin, the latest story will show here automatically.'}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/admin" className="rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white">
-                Add live news
-              </Link>
-              <Link href="/admin" className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
-                Connect CMS
-              </Link>
+              <Link href="/admin" className="rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white">Add live news</Link>
+              <Link href="/admin" className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">Connect CMS</Link>
             </div>
           </div>
 
           <aside className="rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
-            <SectionTitle title="Trending" action={mergedPublishedNews.length > 0 ? 'Live' : 'Empty'} />
-            {mergedPublishedNews.length > 0 ? (
+            <SectionTitle title="Trending" action={news.length > 0 ? 'Live' : 'Empty'} />
+            {news.length > 0 ? (
               <div className="space-y-3">
-                {mergedPublishedNews.slice(0, 3).map((item, index) => (
+                {news.slice(0, 3).map((item, index) => (
                   <div key={`${item.id}-${index}`} className="rounded-[22px] border border-black/8 bg-brand-surfaceLow p-4">
                     <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
                     {item.cover_image ? <img src={item.cover_image} alt={item.title} className="mt-3 h-28 w-full rounded-2xl object-cover" /> : null}
@@ -185,9 +157,7 @@ export default function HomePageClient() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">
-                No trending stories yet. Publish your first article to populate this rail.
-              </div>
+              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">No trending stories yet. Publish your first article to populate this rail.</div>
             )}
           </aside>
         </section>
@@ -207,9 +177,7 @@ export default function HomePageClient() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">
-                No live news items yet. Use the admin portal to publish your first article.
-              </div>
+              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">No live news items yet. Use the admin portal to publish your first article.</div>
             )}
           </div>
 
@@ -225,9 +193,7 @@ export default function HomePageClient() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">
-                Categories will appear automatically after publishing news.
-              </div>
+              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">Categories will appear automatically after publishing news.</div>
             )}
           </div>
         </section>
@@ -241,9 +207,7 @@ export default function HomePageClient() {
                 <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-12 w-12 object-contain" />
                 <div className="font-headline-md text-[22px] font-semibold text-brand-primary">جريدة صوت الهند</div>
               </div>
-              <p className="mt-3 max-w-md text-sm leading-7 text-brand-onSurfaceVariant">
-                Live news portal connected to Supabase. Publish articles from the admin portal and they appear here.
-              </p>
+              <p className="mt-3 max-w-md text-sm leading-7 text-brand-onSurfaceVariant">Live news portal connected to Supabase. Publish articles from the admin portal and they appear here.</p>
             </div>
             <div>
               <div className="text-sm font-semibold text-brand-onSurface">Quick links</div>

@@ -111,6 +111,17 @@ export default function AdminPage() {
     setSavedNews(nextItems);
   };
 
+  const broadcastNewsUpdate = () => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new Event('news-updated'));
+
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('sawt-al-hind-news');
+      channel.postMessage({ type: 'news-updated', timestamp: Date.now() });
+      channel.close();
+    }
+  };
+
   const normalizeNewsItem = (
     item: {
       id: string;
@@ -770,3 +781,4 @@ export default function AdminPage() {
     </main>
   );
 }
+
