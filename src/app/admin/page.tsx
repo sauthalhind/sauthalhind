@@ -100,7 +100,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPasscode = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || 'admin123';
+    const correctPasscode = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || 'saw@123';
     if (passcode === correctPasscode) {
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('sawt-al-hind-admin-auth', 'true');
