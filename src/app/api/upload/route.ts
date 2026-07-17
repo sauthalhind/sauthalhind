@@ -1,5 +1,7 @@
 import { supabaseServer } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const files = formData.getAll('files').filter((value): value is File => value instanceof File);

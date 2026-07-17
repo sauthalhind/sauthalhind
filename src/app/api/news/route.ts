@@ -1,4 +1,6 @@
-﻿import { createNews, deleteNews, listNews, updateNews } from '@/lib/news-store';
+import { createNews, deleteNews, listNews, updateNews } from '@/lib/news-store';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const result = await listNews();
