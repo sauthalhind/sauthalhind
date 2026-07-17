@@ -35,7 +35,13 @@ export async function GET() {
       error: err?.message || String(err),
       name: err?.name,
       code: err?.code,
-      stack: err?.stack ? err.stack.toString() : null
+      stack: err?.stack ? err.stack.toString() : null,
+      cause: err?.cause ? {
+        message: err.cause.message,
+        code: err.cause.code,
+        name: err.cause.name,
+        stack: err.cause.stack ? err.cause.stack.toString() : null
+      } : null
     };
   }
 
