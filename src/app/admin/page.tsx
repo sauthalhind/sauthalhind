@@ -483,50 +483,59 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#0d1b2a] text-white p-4" dir="rtl">
-        <div className="w-full max-w-md bg-[#111827]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00524E]/25 blur-3xl rounded-full"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#D4AF37]/15 blur-3xl rounded-full"></div>
-          
-          <div className="text-center">
-            <img src="/sauthalhind.png" alt="جريدة صوت الهند" className="h-20 w-20 mx-auto object-contain drop-shadow-md" />
-            <h2 className="mt-4 font-headline-md text-2xl font-bold tracking-tight text-white">
-              بوابة الإدارة | CMS Login
-            </h2>
-            <p className="mt-2 text-sm text-white/60">
-              جريدة صوت الهند - نظام إدارة المحتوى
-            </p>
+      <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
+        <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
+                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg leading-none">صوت الهند</span>
+                <span className="text-[10px] uppercase tracking-widest text-white/80">Newsroom CMS</span>
+              </div>
+            </div>
           </div>
+        </header>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-6">
-            <div>
-              <label htmlFor="passcode" className="block text-sm font-medium text-white/80 text-right mb-2">
-                رمز المرور (Passcode)
-              </label>
-              <input
-                id="passcode"
-                type="password"
-                required
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="••••••••"
-                className="w-full text-left rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#d3ab57] transition"
-              />
+        <div className="max-w-md mx-auto mt-20 p-4">
+          <div className="bg-white border border-gray-200 shadow-sm p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-black mb-2">تسجيل الدخول</h2>
+              <p className="text-sm text-gray-500">يرجى إدخال رمز المرور للوصول إلى لوحة التحكم</p>
             </div>
 
-            {authError && (
-              <div className="text-red-400 text-sm text-center bg-red-950/40 border border-red-500/20 py-2.5 px-4 rounded-xl animate-shake">
-                {authError}
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label htmlFor="passcode" className="block text-sm font-bold text-gray-700 mb-2">
+                  رمز المرور (Passcode)
+                </label>
+                <input
+                  id="passcode"
+                  type="password"
+                  required
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full border border-gray-300 bg-white px-4 py-3 text-black outline-none focus:border-[#bb1919] transition"
+                  dir="ltr"
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              className="w-full rounded-2xl bg-[#00524E] border border-[#006C67] hover:bg-[#006A65] py-3.5 text-sm font-semibold text-white transition duration-200"
-            >
-              دخول البوابة
-            </button>
-          </form>
+              {authError && (
+                <div className="text-[#bb1919] text-sm text-center bg-[#ffebeb] border border-[#bb1919]/20 py-3 px-4 font-bold">
+                  {authError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-[#bb1919] hover:bg-[#901414] py-3.5 text-sm font-bold text-white transition duration-200"
+              >
+                تسجيل الدخول
+              </button>
+            </form>
+          </div>
         </div>
       </main>
     );
