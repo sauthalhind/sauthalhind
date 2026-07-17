@@ -45,7 +45,25 @@ export default async function NewsArticlePage({ params }: PageProps) {
   const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();
 
   return (
-    <main className="min-h-screen bg-brand-background text-brand-onSurface">
+    <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
+      {/* BBC Style Brand Header */}
+      <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg leading-none">صوت الهند</span>
+            </div>
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
+            <Link href="/" className="hover:text-gray-200">الرئيسية</Link>
+            <Link href={`/search?category=${encodeURIComponent(article.category)}`} className="hover:text-gray-200">{article.category}</Link>
+          </nav>
+        </div>
+      </header>
+
       <Container className="py-8">
         <script
           type="application/ld+json"
@@ -101,30 +119,35 @@ export default async function NewsArticlePage({ params }: PageProps) {
           }}
         />
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurfaceVariant transition hover:bg-brand-surfaceLow w-fit">
-            <span>←</span> الرئيسية
-          </Link>
-          <div className="text-xs text-brand-onSurfaceVariant font-medium">
-            <span>الرئيسية</span> / <span>الأخبار</span> / <span className="font-semibold text-brand-primary">{article.category}</span>
-          </div>
-        </div>
-
-        <article className="mx-auto max-w-4xl overflow-hidden rounded-[32px] border border-black/6 bg-white shadow-[0_18px_55px_rgba(17,24,39,0.06)]">
-          {article.cover_image ? <img src={article.cover_image} alt={article.title} className="h-72 w-full object-cover sm:h-[460px]" /> : null}
-          <div className="p-5 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">{article.category}</div>
-            <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-5xl">{article.title}</h1>
-            <p className="mt-3 text-sm leading-7 text-brand-onSurfaceVariant">
-              {article.category} • {article.author} • {article.created_at}
-            </p>
-
-            <div className="mt-6">
-              <ShareBar title={article.title} url={url} description="Share this news article with one tap." />
+        <article className="mx-auto max-w-4xl bg-white border border-gray-200 shadow-sm">
+          <div className="p-6 md:p-10">
+            <div className="mb-4 text-sm font-bold text-[#bb1919]">
+              <Link href={`/search?category=${encodeURIComponent(article.category)}`} className="hover:underline">
+                {article.category}
+              </Link>
+            </div>
+            
+            <h1 className="text-3xl md:text-5xl font-bold text-black leading-tight mb-6">
+              {article.title}
+            </h1>
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 pb-4 mb-6 gap-4">
+              <div className="text-sm text-gray-600">
+                <span className="font-bold">{article.author}</span>
+                <span className="mx-2">|</span>
+                <span>{new Date(publishedDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <ShareBar title={article.title} url={url} description={article.title} />
             </div>
 
-            <div className="mt-8 whitespace-pre-wrap rounded-[28px] bg-brand-surfaceLow p-5 text-sm leading-7 text-brand-onSurfaceVariant">
-              {article.body || 'Put your real story body here. Every article page can reuse the same share bar component.'}
+            {article.cover_image && (
+              <div className="mb-8 relative">
+                <img src={article.cover_image} alt={article.title} className="w-full h-auto max-h-[500px] object-cover" />
+              </div>
+            )}
+
+            <div className="whitespace-pre-wrap text-lg md:text-xl leading-loose text-gray-800">
+              {article.body || 'لا يوجد محتوى في هذا المقال.'}
             </div>
           </div>
         </article>

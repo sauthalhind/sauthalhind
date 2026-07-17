@@ -112,7 +112,7 @@ export async function listNews() {
 
   const items = (data ?? []) as NewsRecord[];
   if (items.length === 0) {
-    return { ok: true as const, items: SEED_NEWS, source: 'supabase (seeded)' as const };
+    return { ok: true as const, items: [], source: 'supabase' as const };
   }
 
   return { ok: true as const, items, source: 'supabase' as const };
@@ -232,17 +232,19 @@ export async function getNewsBySlug(slug: string) {
     return { ok: false as const, error: 'Supabase is not configured yet.' };
   }
 
+  const decodedSlug = decodeURIComponent(slug);
+
   const withCover = await supabaseServer
     .from('news')
     .select('id,title,slug,author,category,body,cover_image,status,created_at')
-    .eq('slug', slug)
+    .eq('slug', decodedSlug)
     .maybeSingle();
 
   if (withCover.error?.message?.toLowerCase().includes('cover_image')) {
     const fallback = await supabaseServer
       .from('news')
       .select('id,title,slug,author,category,body,status,created_at')
-      .eq('slug', slug)
+      .eq('slug', decodedSlug)
       .maybeSingle();
 
     if (fallback.error) {

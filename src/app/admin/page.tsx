@@ -76,6 +76,7 @@ export default function AdminPage() {
   const [seoSlug, setSeoSlug] = useState('');
   const [seoBody, setSeoBody] = useState('');
   const [newCategory, setNewCategory] = useState('');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'news' | 'categories' | 'media'>('dashboard');
 
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
   const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>>([]);
@@ -532,21 +533,31 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f7f6] text-[#132126]">
-      <div className="grid min-h-screen lg:grid-cols-[300px_1fr]">
-        <aside className="border-b border-black/8 bg-[#0f1d25] text-white lg:border-b-0 lg:border-l lg:border-black/8">
-          <div className="p-6">
-            <div className="rounded-[28px] border border-white/10 bg-white/6 p-5">
-              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-16 w-16 object-contain shadow-sm" />
-              <div className="text-xs uppercase tracking-[0.32em] text-white/55">Sawt Al-Hind News</div>
-              <div className="mt-2 text-3xl font-bold leading-tight">Admin CMS</div>
-              <p className="mt-3 text-sm leading-7 text-white/70">
-                Manage live news, drafts, categories, media, and approvals from one clean dashboard.
-              </p>
+    <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
+      {/* BBC Style Brand Header */}
+      <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg leading-none">صوت الهند</span>
+              <span className="text-[10px] uppercase tracking-widest text-white/80">Newsroom CMS</span>
             </div>
           </div>
+          <div className="flex items-center gap-4 text-sm font-medium">
+            <span className="bg-white/10 px-3 py-1.5 rounded text-white/90">
+              {statusMessage}
+            </span>
+          </div>
+        </div>
+      </header>
 
-          <nav className="grid gap-1 px-4 pb-6 text-sm font-medium">
+      <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-[280px_1fr] gap-6 items-start">
+        {/* Sidebar Navigation */}
+        <aside className="bg-white border border-black/5 p-2 hidden lg:block sticky top-24">
+          <nav className="flex flex-col gap-1">
             {menu.map((item, index) => {
               const refs = [dashboardRef, newsRef, categoriesRef, mediaRef, workflowRef, moderationRef];
               const target = refs[index] ?? dashboardRef;
@@ -555,8 +566,8 @@ export default function AdminPage() {
                   key={item}
                   type="button"
                   onClick={() => scrollToSection(target)}
-                  className={`rounded-2xl px-4 py-3 text-right transition ${
-                    index === 0 ? 'bg-white text-[#0f1d25]' : 'text-white/80 hover:bg-white/8 hover:text-white'
+                  className={`text-right px-4 py-3 text-sm font-bold border-l-4 transition-all ${
+                    index === 0 ? 'border-[#bb1919] bg-[#fdf2f2] text-[#bb1919]' : 'border-transparent text-[#5a5a5a] hover:bg-gray-50 hover:text-black'
                   }`}
                 >
                   {item}
@@ -566,562 +577,187 @@ export default function AdminPage() {
           </nav>
         </aside>
 
-        <section className="p-4 sm:p-6 lg:p-8">
+        {/* Main Content Area */}
+        <div className="space-y-6">
           <div ref={dashboardRef} />
-          <header className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          
+          {/* Editor Section */}
+          <section ref={newsRef} className="bg-white border border-black/5 p-6 relative">
+            <div className="absolute top-0 right-0 w-full h-1 bg-[#bb1919]"></div>
+            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
-              <div className="mb-3 flex items-center gap-3">
-                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-14 w-14 object-contain shadow-sm" />
+                <h2 className="text-2xl font-bold text-black">محرر الأخبار</h2>
+                <p className="text-sm text-gray-500 mt-1">اكتب وانشر الأخبار بشكل فوري</p>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={resetEditor} className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 font-bold text-black transition">
+                  مقال جديد
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+              {/* Left/Main Editor Col */}
+              <div className="space-y-4">
+                <input 
+                  ref={titleRef} 
+                  onChange={(e) => setSeoTitle(e.target.value)}
+                  defaultValue={seoTitle}
+                  className="w-full border border-gray-300 bg-white px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-xl font-bold transition-shadow" 
+                  placeholder="عنوان الخبر..." 
+                />
+                
+                <textarea
+                  ref={bodyRef}
+                  onChange={(e) => setSeoBody(e.target.value)}
+                  defaultValue={seoBody}
+                  className="min-h-[300px] w-full border border-gray-300 bg-white px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-sm leading-8 transition-shadow"
+                  placeholder="نص المقال يكتب هنا..."
+                />
+                
+                <div className="flex flex-wrap gap-2 pt-4">
+                  <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="bg-[#bb1919] hover:bg-[#a01515] px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm">
+                    نشر المقال فوراً
+                  </button>
+                  <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="bg-gray-800 hover:bg-black px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm">
+                    حفظ مسودة
+                  </button>
+                </div>
+              </div>
+
+              {/* Right/Meta Col */}
+              <div className="space-y-5 bg-gray-50 p-4 border border-gray-100">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.32em] text-[#6a7f86]">Admin CMS</div>
-                  <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-                    Arabic news workflow, built for daily publishing
-                  </h1>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">الرابط الفرعي (Slug)</label>
+                  <input 
+                    ref={slugRef} 
+                    onChange={(e) => setSeoSlug(e.target.value)}
+                    defaultValue={seoSlug}
+                    className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]" 
+                  />
                 </div>
-              </div>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-black/60">
-                No demo stories, no fake analytics. This panel is ready for real news operations:
-                create, schedule, approve, upload media, and place stories on the homepage.
-              </p>
-              <div className="mt-4 inline-flex rounded-full bg-brand-surfaceLow px-4 py-2 text-sm font-medium text-brand-onSurfaceVariant">
-                {statusMessage}
-              </div>
-              <div className="mt-2 inline-flex rounded-full bg-[#eef4f4] px-4 py-2 text-xs font-semibold text-[#0f1d25]">
-                Data source: {dataSource}
-              </div>
-              {debugInfo ? (
-                <div className="mt-2 rounded-2xl border border-black/8 bg-[#f7faf9] px-4 py-3 text-xs leading-6 text-black/70" dir="ltr">
-                  <div className="font-semibold text-[#0f1d25]">Connection check</div>
-                  <div>Supabase connected: {debugInfo.supabaseConfigured ? 'Yes' : 'No'}</div>
-                  <div>News source: {debugInfo.newsSource}</div>
-                  <div>News rows: {debugInfo.newsCount}</div>
-                  {debugInfo.newsError ? <div className="text-red-600">Error: {debugInfo.newsError}</div> : null}
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">التصنيف</label>
+                  <select ref={categoryRef} className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]">
+                    <option value="">اختر القسم...</option>
+                    {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
                 </div>
-              ) : null}
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={() => scrollToSection(newsRef)} className="rounded-full bg-[#0f1d25] px-5 py-3 text-sm font-semibold text-white">
-                  New story
-                </button>
-                <button type="button" onClick={() => scrollToSection(mediaRef)} className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
-                  Upload media
-                </button>
-                <button type="button" onClick={() => scrollToSection(moderationRef)} className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">
-                  Open queue
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Dynamic Stats Cards */}
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
-              <div className="text-sm text-black/55">أخبار منشورة | Published Articles</div>
-              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'published').length}</div>
-              <div className="mt-4 h-1.5 rounded-full bg-black/6">
-                <div className="h-1.5 rounded-full bg-green-600" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'published').length / Math.max(1, savedNews.length)) * 100))}%` }} />
-              </div>
-            </div>
-            
-            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
-              <div className="text-sm text-black/55">المسودات | Drafts</div>
-              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'draft').length}</div>
-              <div className="mt-4 h-1.5 rounded-full bg-black/6">
-                <div className="h-1.5 rounded-full bg-yellow-500" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'draft').length / Math.max(1, savedNews.length)) * 100))}%` }} />
-              </div>
-            </div>
-
-            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
-              <div className="text-sm text-black/55">مراجعة المعلقات | Pending Review</div>
-              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'review').length}</div>
-              <div className="mt-4 h-1.5 rounded-full bg-black/6">
-                <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'review').length / Math.max(1, savedNews.length)) * 100))}%` }} />
-              </div>
-            </div>
-
-            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
-              <div className="text-sm text-black/55">مجدولة للنشر | Scheduled Posts</div>
-              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'scheduled').length}</div>
-              <div className="mt-4 h-1.5 rounded-full bg-black/6">
-                <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'scheduled').length / Math.max(1, savedNews.length)) * 100))}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Elegant Publishing Activity Trend Chart */}
-          <div className="mt-6 rounded-[30px] border border-black/8 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold tracking-tight">توزيع الأخبار حسب الأقسام | News Distribution by Category</h3>
-                <p className="text-xs text-brand-onSurfaceVariant mt-1">نسبة التغطية الصحفية الحالية في مختلف الأقسام</p>
-              </div>
-              <span className="text-xs font-semibold text-brand-primary bg-brand-surfaceLow px-3 py-1.5 rounded-full">تحليل فوري</span>
-            </div>
-            <div className="relative h-56 w-full bg-gradient-to-t from-brand-surfaceLow/50 to-white rounded-2xl p-4 flex items-end justify-between border border-black/5 overflow-hidden">
-              <div className="absolute inset-0 flex flex-col justify-between py-6 px-4 pointer-events-none opacity-20">
-                <div className="border-b border-black w-full"></div>
-                <div className="border-b border-black w-full"></div>
-                <div className="border-b border-black w-full"></div>
-              </div>
-              
-              <svg className="absolute inset-x-0 bottom-0 h-28 w-full text-brand-primary/5 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
-                <path d="M0,100 C25,30 50,75 75,25 C90,65 100,10 100,100 Z" fill="currentColor" />
-              </svg>
-
-              {categoriesList.slice(0, 8).map((cat) => {
-                const count = savedNews.filter(n => n.category === cat).length;
-                const percent = Math.min(100, Math.max(8, count * 20));
-                return (
-                  <div key={cat} className="group relative flex flex-col items-center flex-1 h-full justify-end px-1">
-                    <div className="absolute -top-7 bg-[#0f1d25] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition shadow-md pointer-events-none z-10 whitespace-nowrap">
-                      {cat}: {count} خبر
-                    </div>
-                    <div 
-                      style={{ height: `${percent}%` }}
-                      className="w-full max-w-[36px] rounded-t-xl bg-gradient-to-t from-brand-primary to-[#006C67] hover:from-gold hover:to-[#FED65B] transition-all duration-300 cursor-pointer shadow-sm"
-                    />
-                    <span className="mt-2 text-[10px] text-brand-onSurfaceVariant font-medium truncate max-w-[40px] sm:max-w-none">{cat}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
-            <div ref={newsRef}>
-              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-                <h2 className="text-xl font-bold tracking-[-0.02em]">محرر المقالات | News Editor</h2>
-                <div className="flex gap-2">
-                  <button 
-                    type="button" 
-                    onClick={() => setPreviewTab('edit')} 
-                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${previewTab === 'edit' ? 'bg-brand-primary text-white' : 'bg-brand-surfaceLow text-brand-onSurfaceVariant'}`}
-                  >
-                    المحرر
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setPreviewTab('preview')} 
-                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${previewTab === 'preview' ? 'bg-brand-primary text-white' : 'bg-brand-surfaceLow text-brand-onSurfaceVariant'}`}
-                  >
-                    المعاينة المباشرة
-                  </button>
-                </div>
-              </div>
-
-              {previewTab === 'preview' ? (
-                <div className="rounded-2xl border border-black/5 bg-[#f4f7f6] p-4 sm:p-6 overflow-hidden">
-                  <div className="text-center mb-4 text-xs font-bold text-brand-primary uppercase tracking-widest border-b border-black/5 pb-2">
-                    معاينة حية للمقال قبل النشر | LIVE PREVIEW
-                  </div>
-                  <div className="mx-auto max-w-2xl bg-white rounded-3xl border border-black/6 shadow-lg overflow-hidden">
-                    {coverImage ? (
-                      <img src={coverImage} alt="Cover preview" className="h-56 w-full object-cover" />
-                    ) : (
-                      <div className="h-52 w-full bg-brand-surfaceLow flex items-center justify-center text-brand-onSurfaceVariant/40 text-sm">
-                        [لم يتم تحديد صورة غلاف بعد]
-                      </div>
-                    )}
-                    <div className="p-6 text-right" dir="rtl">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-semibold text-brand-primary">
-                          {categoryRef.current?.value || 'تصنيف غير محدد'}
-                        </span>
-                        <span className="text-xs text-brand-onSurfaceVariant">الآن</span>
-                      </div>
-                      <h1 className="mt-3 text-2xl font-bold text-brand-onSurface leading-tight">
-                        {seoTitle || 'عنوان المقال الافتراضي'}
-                      </h1>
-                      <div className="mt-2 text-xs text-brand-onSurfaceVariant">
-                        الكاتب: {authorRef.current?.value || 'قسم التحرير'}
-                      </div>
-                      <div className="mt-5 text-sm text-brand-onSurfaceVariant leading-7 whitespace-pre-wrap border-t border-black/5 pt-4">
-                        {seoBody || 'اكتب نص المقال في المحرر لتتمكن من معاينته هنا بشكل مباشر...'}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end gap-2">
-                    <button type="button" onClick={() => setPreviewTab('edit')} className="rounded-2xl border border-black/10 px-5 py-3 font-semibold text-sm">
-                      العودة للمحرر
-                    </button>
-                    <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-5 py-3 font-semibold text-[#0f1d25] text-sm disabled:cursor-not-allowed disabled:opacity-60">
-                      نشر المقال فوراً
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="space-y-4">
-                    <input 
-                      ref={titleRef} 
-                      onChange={(e) => setSeoTitle(e.target.value)}
-                      defaultValue={seoTitle}
-                      className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" 
-                      placeholder="عنوان الخبر" 
-                    />
-                    <input 
-                      ref={slugRef} 
-                      onChange={(e) => setSeoSlug(e.target.value)}
-                      defaultValue={seoSlug}
-                      className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" 
-                      placeholder="الرابط الفرعي (Slug)" 
-                    />
-                    <input 
-                      ref={authorRef} 
-                      defaultValue="قسم التحرير"
-                      className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" 
-                      placeholder="اسم الكاتب" 
-                    />
-                    <select ref={categoryRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none">
-                      <option value="">اختر القسم</option>
-                      {categoriesList.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <button type="button" onClick={() => saveNews('scheduled')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium text-sm">
-                        جدولة النشر
-                      </button>
-                      <button type="button" onClick={() => saveNews('review')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium text-sm">
-                        إرسال للمراجعة
-                      </button>
-                    </div>
-
-                    {/* Google SEO Snippet Preview */}
-                    <div className="rounded-2xl border border-black/8 bg-[#f7faf9] p-4 text-right">
-                      <div className="text-xs font-bold text-black/55 mb-2.5 flex items-center justify-between">
-                        <span>عرض نتائج بحث جوجل (معاينة)</span>
-                        <span className="text-[#006C67] font-semibold text-[10px]">Google News Preview</span>
-                      </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">صورة الغلاف</label>
+                  <input
+                    ref={coverPhotoRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      setIsUploading(true);
+                      setCoverImageName(file.name);
+                      flashStatus('Uploading image...');
                       
-                      <div className="bg-white p-3 rounded-xl border border-black/5 font-sans leading-normal text-[13px] text-[#4d5156] text-left" dir="ltr">
-                        <div className="text-[12px] text-[#202124] flex items-center gap-1 mb-1">
-                          <span className="w-4 h-4 rounded-full bg-slate-100 inline-flex items-center justify-center text-[10px]">📰</span>
-                          <div className="truncate">
-                            https://sawtalhind.news <span className="text-gray-400">› news › {seoSlug || 'slug'}</span>
-                          </div>
-                        </div>
-                        <div className="text-[19px] text-[#1a0dab] hover:underline cursor-pointer font-medium truncate mb-1">
-                          {seoTitle || 'عنوان الخبر الرئيسي الذي يظهر في جوجل'} | جريدة صوت الهند
-                        </div>
-                        <div className="text-[14px] text-[#4d5156] line-clamp-2">
-                          {seoBody ? seoBody.slice(0, 155) : 'اكتب نص الخبر في الجهة اليمنى وسيتم هنا عرض مقتطف محركات البحث تلقائياً...'}
-                        </div>
-                      </div>
+                      const formData = new FormData();
+                      formData.append('bucket', 'news-media');
+                      formData.append('files', file);
 
-                      <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-black/55">
-                        <div>
-                          العنوان: <span className={seoTitle.length > 60 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{seoTitle.length}/60 حرف</span>
-                        </div>
-                        <div>
-                          المقتطف: <span className={seoBody.length > 155 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{seoBody.length}/155 حرف</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border border-dashed border-black/10 bg-brand-surfaceLow p-4">
-                      <div className="text-sm font-semibold text-brand-onSurface">صورة الغلاف | Cover Photo</div>
-                      <p className="mt-1 text-xs text-brand-onSurfaceVariant">
-                        الصورة الرئيسية التي تظهر أعلى المقال وفي البطاقات الإخبارية.
-                      </p>
-                      <input
-                        ref={coverPhotoRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0];
-                          if (!file) return;
-
-                          setCoverImageName(file.name);
-                          const formData = new FormData();
-                          formData.append('bucket', 'news-media');
-                          formData.append('files', file);
-
-                          const response = await fetch('/api/upload', {
-                            method: 'POST',
-                            body: formData
-                          });
-                          const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
-
-                          if (!response.ok || !result.ok) {
-                            flashStatus(result.error ?? 'Cover photo upload failed');
-                            return;
-                          }
-
+                      try {
+                        const response = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formData
+                        });
+                        const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
+                        if (!response.ok || !result.ok) {
+                          flashStatus(result.error ?? 'Upload failed');
+                        } else {
                           const url = result.uploaded?.[0]?.url;
                           if (url) {
                             setCoverImage(url);
-                            flashStatus(`Cover photo uploaded: ${file.name}`);
+                            flashStatus('Image uploaded successfully');
                           }
-                        }}
-                      />
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => coverPhotoRef.current?.click()} className="rounded-full bg-[#0f1d25] px-4 py-2 text-xs font-semibold text-white">
-                          اختر صورة
-                        </button>
-                        <button type="button" onClick={() => flashStatus('Cover photo attached')} className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold">
-                          ربط الصورة
-                        </button>
-                      </div>
-                      {coverImage ? (
-                        <div className="mt-4 overflow-hidden rounded-2xl border border-black/8 bg-white">
-                          <img src={coverImage} alt={coverImageName || 'Cover preview'} className="h-48 w-full object-cover" />
-                          <div className="px-4 py-3 text-xs text-black/60">{coverImageName || 'Selected cover image'}</div>
-                        </div>
-                      ) : null}
-                    </div>
-                    
-                    <textarea
-                      ref={bodyRef}
-                      onChange={(e) => setSeoBody(e.target.value)}
-                      defaultValue={seoBody}
-                      className="min-h-[250px] w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none text-sm leading-7"
-                      placeholder="اكتب تفاصيل الخبر هنا..."
-                    />
-                    
-                    <div className="flex flex-wrap gap-3">
-                      <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-sm text-white disabled:cursor-not-allowed disabled:opacity-60">حفظ مسودة</button>
-                      <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-sm text-[#0f1d25] disabled:cursor-not-allowed disabled:opacity-60">نشر المقال</button>
-                      <button type="button" onClick={resetEditor} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold text-sm">مقال جديد</button>
-                      <button type="button" onClick={() => setPreviewTab('preview')} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold text-sm">معاينة</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              </section>
-            </div>
-
-            <div ref={mediaRef}>
-              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-                <h2 className="text-xl font-bold tracking-[-0.02em]">Media library</h2>
-                <span className="text-sm font-medium text-[#0f1d25]">Images and video</span>
-              </div>
-              <div className="rounded-[26px] border-2 border-dashed border-[#7ca3a2]/30 bg-[#f0f7f6] p-6 text-center">
-                <div className="text-4xl">?</div>
-                <div className="mt-3 text-lg font-semibold">Drop files here</div>
-                <p className="mt-2 text-sm leading-7 text-black/60">
-                  JPG, PNG, WebP, MP4, and PDF. Use real file names, alt text, and source credits.
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={(event) => {
-                    const count = event.target.files?.length ?? 0;
-                    flashStatus(count > 0 ? `${count} file(s) selected` : 'No file selected');
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-4 rounded-full bg-[#0f1d25] px-5 py-3 text-sm font-semibold text-white"
-                >
-                  Select files
-                </button>
-                <button
-                  type="button"
-                  disabled={isUploading}
-                  onClick={publishSelectedFiles}
-                  className="ml-2 mt-4 rounded-full border border-black/10 px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isUploading ? 'Uploading...' : 'Upload now'}
-                </button>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                <div className="text-sm font-semibold text-black/60">Upload checklist</div>
-                <div className="rounded-2xl border border-black/8 px-4 py-3">Alt text required</div>
-                <div className="rounded-2xl border border-black/8 px-4 py-3">Featured image required</div>
-                <div className="rounded-2xl border border-black/8 px-4 py-3">Video caption required</div>
-                <div className="rounded-2xl border border-black/8 px-4 py-3">Copyright source required</div>
-              </div>
-              </section>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <div ref={categoriesRef}>
-              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-                <h2 className="text-xl font-bold tracking-[-0.02em]">Categories and homepage blocks</h2>
-                <span className="text-sm font-medium text-[#0f1d25]">Structure</span>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {contentBlocks.map((item) => (
-                  <div key={item} className="rounded-2xl border border-black/8 px-4 py-3">
-                    {item}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 rounded-[26px] bg-[#f6f8f8] p-5 border border-black/5">
-                <div className="text-sm font-semibold text-black/80 mb-3 text-right">مدير الأقسام | Category Manager</div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="اسم القسم الجديد..."
-                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary text-right"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const trimmed = newCategory.trim();
-                      if (!trimmed) return;
-                      if (categoriesList.includes(trimmed)) {
-                        flashStatus('القسم موجود بالفعل');
-                        return;
+                        }
+                      } catch(e) {
+                        flashStatus('Upload error');
+                      } finally {
+                        setIsUploading(false);
                       }
-                      setCategoriesList([...categoriesList, trimmed]);
-                      setNewCategory('');
-                      flashStatus(`تمت إضافة القسم: ${trimmed}`);
                     }}
-                    className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-[#006A65] transition shrink-0"
+                  />
+                  
+                  <div 
+                    onClick={() => coverPhotoRef.current?.click()}
+                    className={`border-2 border-dashed border-gray-300 bg-white p-4 text-center cursor-pointer hover:border-[#bb1919] transition-colors ${isUploading ? 'opacity-50' : ''}`}
                   >
-                    إضافة
-                  </button>
-                </div>
-                
-                <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-white rounded-xl border border-black/5 justify-start">
-                  {categoriesList.map((cat) => (
-                    <span 
-                      key={cat} 
-                      className="inline-flex items-center gap-1.5 rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant border border-black/5"
-                    >
-                      {cat}
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                          if (categoriesList.length <= 1) {
-                            flashStatus('يجب أن يتبقى قسم واحد على الأقل');
-                            return;
-                          }
-                          setCategoriesList(categoriesList.filter(c => c !== cat));
-                          flashStatus(`تم حذف القسم: ${cat}`);
-                        }}
-                        className="text-red-500 hover:text-red-700 font-bold ml-1"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-              </section>
-            </div>
-
-            <div ref={workflowRef}>
-              <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-                <h2 className="text-xl font-bold tracking-[-0.02em]">Publishing workflow</h2>
-                <span className="text-sm font-medium text-[#0f1d25]">Operations</span>
-              </div>
-
-              <div className="space-y-3">
-                {publishingSteps.map((step, index) => (
-                  <div key={step} className="flex items-start gap-4 rounded-2xl border border-black/8 p-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1d25] text-sm font-semibold text-white">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <div className="font-medium">{step}</div>
-                      <div className="mt-1 text-sm text-black/55">
-                        No mock content. Connect this panel to your database, then these steps drive the live newsroom.
+                    {coverImage ? (
+                      <div className="relative">
+                        <img src={coverImage} alt="Cover preview" className="h-32 w-full object-cover mb-2" />
+                        <span className="text-[10px] bg-black/60 text-white px-2 py-1 absolute bottom-2 right-2">تغيير الصورة</span>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="py-6">
+                        <div className="text-xl mb-1 text-gray-400">📷</div>
+                        <div className="text-xs font-bold text-gray-600">{isUploading ? 'جاري الرفع...' : 'اختر صورة من جهازك'}</div>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="mt-5 rounded-[26px] bg-[#f6f8f8] p-4">
-                <div className="text-sm font-semibold text-black/60">Newsroom settings</div>
-                <div className="mt-3 grid gap-3">
-                  {settings.map((item) => (
-                    <label key={item} className="flex items-center justify-between rounded-2xl border border-black/8 px-4 py-3">
-                      <span>{item}</span>
-                      <input type="checkbox" defaultChecked className="h-4 w-4 accent-[#0f1d25]" onChange={() => flashStatus(`${item} toggled`)} />
-                    </label>
-                  ))}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">الكاتب</label>
+                  <input 
+                    ref={authorRef} 
+                    defaultValue="قسم التحرير"
+                    className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]" 
+                  />
                 </div>
               </div>
-              </section>
             </div>
-          </div>
+          </section>
 
-          <div ref={moderationRef} className="mt-6 rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-              <h2 className="text-xl font-bold tracking-[-0.02em]">Moderation and approvals</h2>
-              <span className="text-sm font-medium text-[#0f1d25]">Queue is empty</span>
+          {/* List of News */}
+          <section className="bg-white border border-black/5 p-6">
+            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-xl font-bold text-black">الأخبار المنشورة ({savedNews.length})</h2>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-[24px] border border-black/8 p-5">
-                <div className="text-sm text-black/55">Comments moderation</div>
-                <p className="mt-3 text-sm leading-7 text-black/65">
-                  Approve, reject, or auto-filter comments before they appear on the site.
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-black/8 p-5">
-                <div className="text-sm text-black/55">Author approvals</div>
-                <p className="mt-3 text-sm leading-7 text-black/65">
-                  Restrict publishing rights, draft editing, and scheduled story approvals by role.
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-black/8 p-5">
-                <div className="text-sm text-black/55">SEO checklist</div>
-                <p className="mt-3 text-sm leading-7 text-black/65">
-                  Title, description, canonical URL, image alt text, and schema before publish.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-              <h2 className="text-xl font-bold tracking-[-0.02em]">Saved news</h2>
-              <span className="text-sm font-medium text-[#0f1d25]">{savedNews.length} items</span>
-            </div>
-            <div className="space-y-3">
+            
+            <div className="grid gap-4">
               {savedNews.length === 0 ? (
-                <div className="rounded-[22px] border border-dashed border-black/10 bg-brand-surfaceLow p-4 text-sm text-brand-onSurfaceVariant">
-                  No saved news yet. Publish one from the editor above.
+                <div className="text-center py-12 text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-200">
+                  لا توجد أخبار بعد.
                 </div>
               ) : (
                 savedNews.map((item) => (
-                  <div key={item.id} className="grid gap-3 rounded-[22px] border border-black/8 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                    <div>
-                      <div className="text-xs text-black/45">{item.category}</div>
-                      <div className="mt-1 font-medium leading-7">{item.title}</div>
-                      {item.cover_image ? <div className="mt-3 overflow-hidden rounded-2xl border border-black/8"><img src={item.cover_image} alt={item.title} className="h-40 w-full object-cover" /></div> : null}
-                      <div className="mt-1 text-sm text-black/55">{item.created_at}</div>
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white border border-gray-200 p-4 hover:border-gray-300 transition-colors">
+                    {item.cover_image && (
+                      <div className="w-full sm:w-32 h-20 shrink-0 bg-gray-100">
+                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] font-bold text-[#bb1919] uppercase tracking-wider mb-1">{item.category}</div>
+                      <div className="font-bold text-base text-gray-900 truncate">{item.title}</div>
+                      <div className="text-xs text-gray-500 mt-1">{item.created_at}</div>
                     </div>
-                    <div className="flex flex-wrap gap-2 sm:justify-end">
-                      <button type="button" disabled={isSaving} onClick={() => fillFormFromNews(item)} className="rounded-full border border-black/10 px-3 py-1 text-sm font-semibold disabled:opacity-60">Edit</button>
-                      <button type="button" disabled={isSaving} onClick={() => togglePublicDraft(item)} className="rounded-full border border-black/10 px-3 py-1 text-sm font-semibold disabled:opacity-60">
-                        {item.status === 'published' ? 'Make draft' : 'Make public'}
+                    <div className="flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
+                      <a href={`/news/${item.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 transition">عرض الخبر</a>
+                      <button type="button" disabled={isSaving} onClick={() => fillFormFromNews(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">تعديل</button>
+                      <button type="button" disabled={isSaving} onClick={() => togglePublicDraft(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">
+                        {item.status === 'published' ? 'إلى مسودة' : 'نشر'}
                       </button>
-                      <button type="button" disabled={isSaving} onClick={() => removeNews(item.id)} className="rounded-full border border-red-200 px-3 py-1 text-sm font-semibold text-red-600 disabled:opacity-60">
-                        Delete
-                      </button>
-                      <span className="rounded-full bg-[#0f1d25] px-3 py-1 text-sm text-white">{item.status}</span>
+                      <button type="button" disabled={isSaving} onClick={() => removeNews(item.id)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 transition">حذف</button>
+                      <span className={`text-[10px] font-bold px-2 py-1 ${item.status === 'published' ? 'bg-[#bb1919] text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        {item.status === 'published' ? 'منشور' : 'مسودة'}
+                      </span>
                     </div>
                   </div>
                 ))
               )}
             </div>
-          </div>
-        </section>
+          </section>
+
+        </div>
       </div>
     </main>
   );
