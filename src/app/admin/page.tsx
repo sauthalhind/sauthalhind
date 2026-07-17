@@ -211,7 +211,7 @@ export default function AdminPage() {
     setSeoTitle(item.title);
     setSeoSlug(item.slug);
     setSeoBody(item.body ?? '');
-    flashStatus(`Editing ${item.title}`);
+    flashStatus(`جاري التعديل: ${item.title}`);
   };
 
   const resetEditor = () => {
@@ -226,7 +226,7 @@ export default function AdminPage() {
     setSeoTitle('');
     setSeoSlug('');
     setSeoBody('');
-    flashStatus('Editor cleared');
+    flashStatus('تم مسح المحرر');
   };
 
   const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
@@ -260,7 +260,7 @@ export default function AdminPage() {
       setSavedNews(nextSavedNews);
 
       resetEditor();
-      flashStatus(status === 'published' ? 'Published locally (Syncing...)' : 'Saved locally (Syncing...)');
+      flashStatus(status === 'published' ? 'تم النشر بنجاح (جاري المزامنة...)' : 'تم الحفظ كمسودة (جاري المزامنة...)');
 
       // 2. Perform background sync
       const response = await fetch('/api/news', {
@@ -274,7 +274,7 @@ export default function AdminPage() {
         | { ok: false; error?: string };
 
       if (!response.ok || !result.ok) {
-        flashStatus(result && !result.ok ? `Local only: ${result.error}` : 'Saved locally only');
+        flashStatus(result && !result.ok ? `خطأ في المزامنة: ${result.error}` : 'تم الحفظ محلياً فقط (تعذرت المزامنة)');
         return;
       }
 
@@ -302,35 +302,25 @@ export default function AdminPage() {
       setSavedNews(syncedSavedNews);
 
       broadcastNewsUpdate();
-      flashStatus(
-        status === 'published'
-          ? 'Published to cloud'
-          : status === 'review'
-            ? 'Sent to review queue'
-            : status === 'scheduled'
-              ? 'Publish scheduled'
-              : editingId
-                ? 'Changes saved to cloud'
-                : 'Draft saved to cloud'
-      );
+      flashStatus(status === 'published' ? 'تم النشر بنجاح' : 'تم الحفظ بنجاح');
     } catch (error) {
       console.error('saveNews background sync failed', error);
       setSavedNews(originalSavedNews);
       saveLocalNewsOnly(originalLocalNews);
-      flashStatus('Saved locally only (Sync failed)');
+      flashStatus('تعذرت المزامنة السحابية (تم الحفظ محلياً)');
     }
   };
 
   const publishSelectedFiles = async () => {
     const files = fileInputRef.current?.files;
     if (!files || files.length === 0) {
-      flashStatus('Select files first');
+      flashStatus('يرجى اختيار ملف أولاً');
       return;
     }
 
     setIsUploading(true);
     try {
-      flashStatus('Uploading files...');
+      flashStatus('جاري الرفع...');
       const formData = new FormData();
       Array.from(files).forEach((file) => formData.append('files', file));
 
@@ -340,7 +330,7 @@ export default function AdminPage() {
       });
       const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ name: string; url?: string }>; error?: string };
       if (!response.ok || !result.ok) {
-        flashStatus(result.error ?? 'Upload failed');
+        flashStatus(result.error ?? 'فشل الرفع');
         return;
       }
 
@@ -348,10 +338,10 @@ export default function AdminPage() {
       if (firstUrl) {
         setCoverImage(firstUrl);
       }
-      flashStatus(`Uploaded ${result.uploaded?.length ?? 0} file(s)`);
+      flashStatus(`تم رفع ${result.uploaded?.length ?? 0} ملف(ات)`);
     } catch (error) {
       console.error('publishSelectedFiles failed', error);
-      flashStatus('Upload failed');
+      flashStatus('فشل الرفع');
     } finally {
       setIsUploading(false);
     }
@@ -371,7 +361,7 @@ export default function AdminPage() {
     if (editingId === id) {
       resetEditor();
     }
-    flashStatus('News deleted');
+    flashStatus('تم الحذف');
 
     // 2. Perform API sync in background
     try {
@@ -382,7 +372,7 @@ export default function AdminPage() {
         // Revert on failure
         setSavedNews(originalSavedNews);
         saveLocalNewsOnly(originalLocalNews);
-        flashStatus(result.error ?? 'Delete sync failed');
+        flashStatus(result.error ?? 'فشلت مزامنة الحذف');
       } else {
         broadcastNewsUpdate();
       }
@@ -390,7 +380,7 @@ export default function AdminPage() {
       console.error('removeNews background sync failed', error);
       setSavedNews(originalSavedNews);
       saveLocalNewsOnly(originalLocalNews);
-      flashStatus('Delete sync failed');
+      flashStatus('فشلت مزامنة الحذف');
     }
   };
 
@@ -409,7 +399,7 @@ export default function AdminPage() {
       news.id === item.id ? { ...news, status: nextStatus } : news
     );
     saveLocalNewsOnly(nextLocalNews);
-    flashStatus(nextStatus === 'published' ? 'Marked public' : 'Saved as draft');
+    flashStatus(nextStatus === 'published' ? 'تم تعيينه كمنشور' : 'تم تعيينه كمسودة');
 
     // 2. Perform API sync in background
     try {
@@ -424,7 +414,7 @@ export default function AdminPage() {
         // Revert on failure
         setSavedNews(originalSavedNews);
         saveLocalNewsOnly(originalLocalNews);
-        flashStatus(result.error ?? 'Status sync failed');
+        flashStatus(result.error ?? 'فشلت مزامنة الحالة');
       } else {
         broadcastNewsUpdate();
       }
@@ -432,7 +422,7 @@ export default function AdminPage() {
       console.error('togglePublicDraft background sync failed', error);
       setSavedNews(originalSavedNews);
       saveLocalNewsOnly(originalLocalNews);
-      flashStatus('Status sync failed');
+      flashStatus('فشلت مزامنة الحالة');
     }
   };
 
@@ -666,7 +656,7 @@ export default function AdminPage() {
                       if (!file) return;
                       setIsUploading(true);
                       setCoverImageName(file.name);
-                      flashStatus('Uploading image...');
+                      flashStatus('جاري رفع الصورة...');
                       
                       const formData = new FormData();
                       formData.append('bucket', 'news-media');
