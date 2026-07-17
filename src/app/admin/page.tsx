@@ -721,7 +721,9 @@ export default function AdminPage() {
           {/* List of News */}
           <section className="bg-white border border-black/5 p-6">
             <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-              <h2 className="text-xl font-bold text-black">الأخبار المنشورة ({savedNews.length})</h2>
+              <h2 className="text-xl font-bold text-black">
+                الأخبار المنشورة <span key={savedNews.length} translate="no">({savedNews.length})</span>
+              </h2>
             </div>
             
             <div className="grid gap-4">
