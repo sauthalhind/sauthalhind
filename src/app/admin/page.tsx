@@ -553,7 +553,7 @@ export default function AdminPage() {
                 Data source: {dataSource}
               </div>
               {debugInfo ? (
-                <div className="mt-2 rounded-2xl border border-black/8 bg-[#f7faf9] px-4 py-3 text-xs leading-6 text-black/70">
+                <div className="mt-2 rounded-2xl border border-black/8 bg-[#f7faf9] px-4 py-3 text-xs leading-6 text-black/70" dir="ltr">
                   <div className="font-semibold text-[#0f1d25]">Connection check</div>
                   <div>Supabase connected: {debugInfo.supabaseConfigured ? 'Yes' : 'No'}</div>
                   <div>News source: {debugInfo.newsSource}</div>
