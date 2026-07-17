@@ -26,8 +26,7 @@ export default async function EnglishHome() {
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">
-              <Link href="/" className="hover:bg-white/10 px-3 py-1.5 rounded transition">العربية (AR)</Link>
-              <Link href="/admin" className="bg-white/20 hover:bg-white/30 px-3.5 py-1.5 rounded transition">CMS</Link>
+              <Link href="/" className="hover:bg-white/10 px-3 py-1.5 rounded transition">عربي</Link>
             </div>
           </div>
         </div>

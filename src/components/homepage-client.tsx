@@ -183,7 +183,6 @@ export default function HomePageClient() {
 
             <div className="flex items-center gap-4 text-xs font-semibold">
               <Link href="/en" className="hover:bg-white/10 px-3 py-1.5 rounded transition">English</Link>
-              <Link href="/admin" className="bg-white/20 hover:bg-white/30 px-3.5 py-1.5 rounded transition">لوحة التحكم (CMS)</Link>
             </div>
           </div>
         </div>
