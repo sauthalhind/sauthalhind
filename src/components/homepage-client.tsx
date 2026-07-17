@@ -28,12 +28,35 @@ function SectionTitle({ title, action }: { title: string; action?: string }) {
 function normalizeNewsItem(item: NewsItem) {
   return { ...item, slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-') };
 }
+const localNewsKey = 'sawt-al-hind-admin-news';
+
+function readLocalNews(): NewsItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(localNewsKey) ?? '[]') as NewsItem[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function HomePageClient() {
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [apiNews, setApiNews] = useState<NewsItem[]>([]);
+  const [localNews, setLocalNews] = useState<NewsItem[]>([]);
   const [sourceState, setSourceState] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
   const [message, setMessage] = useState('Loading live newsroom...');
   const [lastSync, setLastSync] = useState('');
+
+  useEffect(() => {
+    const syncLocal = () => setLocalNews(readLocalNews());
+    syncLocal();
+    window.addEventListener('storage', syncLocal);
+    const interval = window.setInterval(syncLocal, 2000);
+    return () => {
+      window.removeEventListener('storage', syncLocal);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -49,18 +72,18 @@ export default function HomePageClient() {
 
         if (response.ok && result.ok) {
           const published = result.items.map(normalizeNewsItem).filter((item) => item.status === 'published');
-          setNews(published);
+          setApiNews(published);
           setSourceState(result.source === 'fallback' ? 'fallback' : 'supabase');
           setMessage(result.source === 'fallback' ? 'Using fallback data' : 'Connected to Supabase live data');
           setLastSync(new Date().toISOString());
         } else {
-          setNews([]);
+          setApiNews([]);
           setSourceState('fallback');
           setMessage('No published stories available yet');
         }
       } catch {
         if (!mounted) return;
-        setNews([]);
+        setApiNews([]);
         setSourceState('error');
         setMessage('Unable to load live news');
       }
@@ -87,6 +110,21 @@ export default function HomePageClient() {
       channel?.close();
     };
   }, []);
+
+  const news = useMemo(() => {
+    const publishedApi = apiNews.filter((item) => item.status === 'published');
+    const publishedLocal = localNews.filter((item) => item.status === 'published');
+    const map = new Map<string, NewsItem>();
+
+    [...publishedApi, ...publishedLocal].forEach((item) => {
+      map.set(item.id, item);
+      if (item.slug) {
+        map.set(item.slug, item);
+      }
+    });
+
+    return Array.from(map.values()).filter((item) => item.id === map.get(item.id)?.id).slice(0, 12);
+  }, [apiNews, localNews]);
 
   const heroStory = news[0];
   const latestNews = news.slice(1, 5);
