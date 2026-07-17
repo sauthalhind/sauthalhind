@@ -639,12 +639,38 @@ export default function AdminPage() {
                   />
                 </div>
                 
-                <div>
+                <div className="flex flex-col gap-2">
                   <label className="block text-xs font-bold text-gray-600 mb-1">التصنيف</label>
-                  <select ref={categoryRef} className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]">
-                    <option value="">اختر القسم...</option>
-                    {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <select ref={categoryRef} className="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]">
+                      <option value="">اختر القسم...</option>
+                      {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                    <div className="flex gap-1 sm:w-1/3">
+                      <input 
+                        type="text" 
+                        placeholder="قسم جديد (New)" 
+                        value={newCategory} 
+                        onChange={(e) => setNewCategory(e.target.value)} 
+                        className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if(newCategory.trim() && !categoriesList.includes(newCategory.trim())) {
+                            setCategoriesList([...categoriesList, newCategory.trim()]);
+                            setTimeout(() => {
+                              if(categoryRef.current) categoryRef.current.value = newCategory.trim();
+                            }, 50);
+                            setNewCategory('');
+                          }
+                        }}
+                        className="bg-gray-800 text-white px-3 py-2 text-xs font-bold whitespace-nowrap hover:bg-black transition-colors"
+                      >
+                        إضافة
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
