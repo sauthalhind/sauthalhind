@@ -15,33 +15,40 @@ export default async function EnglishHome() {
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="ltr">
-      <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
-              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
+      <header className="bg-[#bb1919] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-[72px] items-center justify-between">
+            <div className="flex items-center gap-4 text-white">
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
+              <div>
+                <span className="font-bold text-xl sm:text-2xl tracking-tight">Sawt Al-Hind News</span>
+                <span className="text-[10px] opacity-75 ml-2 tracking-widest hidden sm:inline uppercase">English Edition</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg leading-none tracking-tight">Sawt Al-Hind</span>
-              <span className="text-[10px] uppercase tracking-widest text-white/80 font-semibold">News</span>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <Link href="/" className="hover:bg-white/10 px-3 py-1.5 rounded transition">العربية (AR)</Link>
+              <Link href="/admin" className="bg-white/20 hover:bg-white/30 px-3.5 py-1.5 rounded transition">CMS</Link>
             </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm font-bold">
-            <Link href="/" className="hover:text-gray-200 bg-black/20 px-3 py-1.5 rounded transition">
-              العربية (AR)
-            </Link>
           </div>
         </div>
       </header>
 
-      <div className="bg-[#901414] text-white">
-        <div className="max-w-7xl mx-auto px-4 h-10 flex items-center">
-          <span className="text-xs font-bold tracking-widest uppercase">English Edition</span>
+      {/* Categories Navigation Ribbon */}
+      <div className="bg-[#901414] text-white sticky top-0 z-50 shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold whitespace-nowrap scrollbar-none">
+            <Link href="/en" className="hover:text-gray-200 border-b-2 border-white pb-0.5">Home</Link>
+            <Link href="/search?category=Breaking News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Breaking News</Link>
+            <Link href="/search?category=World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">World</Link>
+            <Link href="/search?category=Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Economy</Link>
+            <Link href="/search?category=Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Culture</Link>
+            <Link href="/search?category=Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Sports</Link>
+          </nav>
         </div>
       </div>
 
       <Container className="py-8">
-        <div className="mb-8 border-l-4 border-[#bb1919] pl-3">
+        <div className="mb-8 border-l-4 border-[#bb1919] pl-4">
           <h1 className="text-3xl font-bold text-black">Latest News</h1>
           <p className="text-gray-500 mt-1 text-sm">Top stories translated and curated for the English edition.</p>
         </div>

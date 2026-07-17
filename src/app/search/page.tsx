@@ -19,24 +19,40 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
-      <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
-              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
+      <header className="bg-[#bb1919] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-[72px] items-center justify-between">
+            <div className="flex items-center gap-4 text-white">
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
+              <div>
+                <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
+                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sawt Al-Hind News</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg leading-none">صوت الهند</span>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <Link href="/en" className="hover:bg-white/10 px-3 py-1.5 rounded transition">English</Link>
+              <Link href="/admin" className="bg-white/20 hover:bg-white/30 px-3.5 py-1.5 rounded transition">لوحة التحكم (CMS)</Link>
             </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm font-bold">
-            <Link href="/" className="hover:text-gray-200 bg-black/20 px-3 py-1.5 rounded transition">الرئيسية</Link>
           </div>
         </div>
       </header>
 
+      {/* Categories Navigation Ribbon */}
+      <div className="bg-[#901414] text-white sticky top-0 z-50 shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold whitespace-nowrap scrollbar-none">
+            <Link href="/" className="hover:text-gray-200 border-b-2 border-white pb-0.5">الرئيسية</Link>
+            <Link href="/search?category=Breaking News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار عاجلة</Link>
+            <Link href="/search?category=World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار العالم</Link>
+            <Link href="/search?category=Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">مال وأعمال</Link>
+            <Link href="/search?category=Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">ثقافة وفنون</Link>
+            <Link href="/search?category=Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">الرياضة</Link>
+          </nav>
+        </div>
+      </div>
+
       <Container className="py-8">
-        <div className="mb-8 border-r-4 border-[#bb1919] pr-3">
+        <div className="mb-8 border-r-4 border-[#bb1919] pr-4">
           <h1 className="text-3xl font-bold text-black">البحث في الأخبار</h1>
           <p className="mt-2 text-sm text-gray-500">ابحث عن التقارير، المقالات، والأخبار المنشورة.</p>
         </div>
