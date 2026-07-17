@@ -437,7 +437,10 @@ export default function AdminPage() {
         if (response.ok && result.ok) {
           setDataSource(result.source === 'fallback' ? 'fallback' : 'supabase');
           const localItems = readLocalNews();
-          setSavedNews([...result.items.map(normalizeNewsItem), ...localItems]);
+          const apiItems = result.items.map(normalizeNewsItem);
+          const map = new Map();
+          [...apiItems, ...localItems].forEach((item) => map.set(item.id, item));
+          setSavedNews(Array.from(map.values()));
         } else {
           setDataSource('fallback');
           setSavedNews(readLocalNews());
