@@ -148,6 +148,13 @@ export default function AdminPage() {
     setSavedNews(nextItems);
   };
 
+  const saveLocalNewsOnly = (
+    items: Array<{ id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>
+  ) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(localNewsKey, JSON.stringify(items));
+  };
+
   const broadcastNewsUpdate = () => {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new Event('news-updated'));
@@ -236,13 +243,21 @@ export default function AdminPage() {
       created_at: new Date().toISOString()
     };
 
+    const originalSavedNews = savedNews;
+    const originalLocalNews = readLocalNews();
+
     try {
-      // 1. Instantly save locally and reset editor
-      const localItems = readLocalNews();
-      const nextLocalItems = editingId
-        ? localItems.map((item) => (item.id === editingId ? { ...item, ...optimisticItem } : item))
-        : [optimisticItem, ...localItems];
-      writeLocalNews(nextLocalItems);
+      // 1. Instantly save locally and update UI state
+      const nextLocalNews = editingId
+        ? originalLocalNews.map((item) => (item.id === editingId ? { ...item, ...optimisticItem } : item))
+        : [optimisticItem, ...originalLocalNews];
+      saveLocalNewsOnly(nextLocalNews);
+
+      const nextSavedNews = editingId
+        ? savedNews.map((item) => (item.id === editingId ? { ...item, ...optimisticItem } : item))
+        : [optimisticItem, ...savedNews];
+      setSavedNews(nextSavedNews);
+
       resetEditor();
       flashStatus(status === 'published' ? 'Published locally (Syncing...)' : 'Saved locally (Syncing...)');
 
@@ -263,8 +278,7 @@ export default function AdminPage() {
       }
 
       // 3. Update the temporary ID with the real database ID
-      const currentItems = readLocalNews();
-      const nextItems = currentItems.map((item) =>
+      const syncedLocalNews = readLocalNews().map((item) =>
         item.id === tempId
           ? {
               ...item,
@@ -273,7 +287,19 @@ export default function AdminPage() {
             }
           : item
       );
-      writeLocalNews(nextItems);
+      saveLocalNewsOnly(syncedLocalNews);
+
+      const syncedSavedNews = savedNews.map((item) =>
+        item.id === tempId
+          ? {
+              ...item,
+              id: result.item?.id ?? tempId,
+              created_at: result.item?.created_at ?? item.created_at
+            }
+          : item
+      );
+      setSavedNews(syncedSavedNews);
+
       broadcastNewsUpdate();
       flashStatus(
         status === 'published'
@@ -288,6 +314,8 @@ export default function AdminPage() {
       );
     } catch (error) {
       console.error('saveNews background sync failed', error);
+      setSavedNews(originalSavedNews);
+      saveLocalNewsOnly(originalLocalNews);
       flashStatus('Saved locally only (Sync failed)');
     }
   };
@@ -329,11 +357,16 @@ export default function AdminPage() {
   };
 
   const removeNews = async (id: string) => {
+    const originalSavedNews = savedNews;
     const originalLocalNews = readLocalNews();
-    const updatedLocalNews = originalLocalNews.filter((item) => item.id !== id);
     
-    // 1. Instantly update UI locally
-    writeLocalNews(updatedLocalNews);
+    // 1. Instantly update UI locally and local storage
+    const nextSavedNews = savedNews.filter((item) => item.id !== id);
+    setSavedNews(nextSavedNews);
+    
+    const nextLocalNews = originalLocalNews.filter((item) => item.id !== id);
+    saveLocalNewsOnly(nextLocalNews);
+
     if (editingId === id) {
       resetEditor();
     }
@@ -346,27 +379,35 @@ export default function AdminPage() {
 
       if (!response.ok || !result.ok) {
         // Revert on failure
-        writeLocalNews(originalLocalNews);
+        setSavedNews(originalSavedNews);
+        saveLocalNewsOnly(originalLocalNews);
         flashStatus(result.error ?? 'Delete sync failed');
       } else {
         broadcastNewsUpdate();
       }
     } catch (error) {
       console.error('removeNews background sync failed', error);
-      writeLocalNews(originalLocalNews);
+      setSavedNews(originalSavedNews);
+      saveLocalNewsOnly(originalLocalNews);
       flashStatus('Delete sync failed');
     }
   };
 
   const togglePublicDraft = async (item: { id: string; status: string }) => {
     const nextStatus = item.status === 'published' ? 'draft' : 'published';
+    const originalSavedNews = savedNews;
     const originalLocalNews = readLocalNews();
-    const updatedLocalNews = originalLocalNews.map((news) =>
+
+    // 1. Instantly update UI locally and local storage
+    const nextSavedNews = savedNews.map((news) =>
       news.id === item.id ? { ...news, status: nextStatus } : news
     );
+    setSavedNews(nextSavedNews);
 
-    // 1. Instantly update UI locally
-    writeLocalNews(updatedLocalNews);
+    const nextLocalNews = originalLocalNews.map((news) =>
+      news.id === item.id ? { ...news, status: nextStatus } : news
+    );
+    saveLocalNewsOnly(nextLocalNews);
     flashStatus(nextStatus === 'published' ? 'Marked public' : 'Saved as draft');
 
     // 2. Perform API sync in background
@@ -380,14 +421,16 @@ export default function AdminPage() {
 
       if (!response.ok || !result.ok) {
         // Revert on failure
-        writeLocalNews(originalLocalNews);
+        setSavedNews(originalSavedNews);
+        saveLocalNewsOnly(originalLocalNews);
         flashStatus(result.error ?? 'Status sync failed');
       } else {
         broadcastNewsUpdate();
       }
     } catch (error) {
       console.error('togglePublicDraft background sync failed', error);
-      writeLocalNews(originalLocalNews);
+      setSavedNews(originalSavedNews);
+      saveLocalNewsOnly(originalLocalNews);
       flashStatus('Status sync failed');
     }
   };
