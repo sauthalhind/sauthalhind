@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui';
 import { listNews } from '@/lib/news-store';
+import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'Sawt Al-Hind News | English',
@@ -88,6 +89,7 @@ export default async function EnglishHome() {
           </div>
         )}
       </Container>
+      <Footer />
     </main>
   );
 }

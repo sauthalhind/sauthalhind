@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ShareBar } from '@/components/share-bar';
+import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
 import { getNewsBySlug } from '@/lib/news-store';
 
@@ -152,6 +153,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
           </div>
         </article>
       </Container>
+      <Footer />
     </main>
   );
 }

@@ -11,11 +11,7 @@ export default async function sitemap() {
       changeFrequency: 'hourly',
       priority: 1
     },
-    {
-      url: `${baseUrl}/admin`,
-      changeFrequency: 'daily',
-      priority: 0.4
-    },
+
     ...articles.map((item) => ({
       url: `${baseUrl}/news/${item.slug}`,
       changeFrequency: 'daily' as const,

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui';
+import Footer from '@/components/footer';
 import { listNews } from '@/lib/news-store';
 
 export const metadata: Metadata = {
@@ -94,6 +95,7 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
           )}
         </div>
       </Container>
+      <Footer />
     </main>
   );
 }

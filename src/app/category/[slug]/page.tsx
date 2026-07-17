@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
 import { listNews } from '@/lib/news-store';
 
@@ -121,6 +123,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           )}
         </div>
       </Container>
+      <Footer />
     </main>
   );
 }
