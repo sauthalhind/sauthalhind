@@ -138,7 +138,7 @@ export default function HomePageClient() {
   }, [sourceState]);
 
   return (
-    <main className="min-h-screen bg-brand-background text-brand-onSurface">
+    <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -171,32 +171,50 @@ export default function HomePageClient() {
           ])
         }}
       />
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-xl">
-        <Container className="py-4">
-          <div className="flex items-center justify-between gap-4">
+      
+      {/* BBC Arabic Style Red Header Banner */}
+      <header className="bg-[#bb1919] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
-              <button className="rounded-full border border-black/8 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurfaceVariant shadow-sm sm:hidden">Menu</button>
-              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-12 w-12 object-contain shadow-sm" />
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
               <div>
-                <div className="font-headline-md text-[18px] font-semibold tracking-[-0.02em] text-brand-primary sm:text-[22px]">جريدة صوت الهند</div>
-                <div className="text-[11px] uppercase tracking-[0.28em] text-black/35">Sawt Al-Hind News</div>
+                <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
+                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sawt Al-Hind News</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Link href="/en" className="rounded-full border border-black/8 bg-white px-3 py-2 text-sm font-medium text-brand-onSurfaceVariant shadow-sm">EN</Link>
-              <Link href="/search" aria-label="Search" className="rounded-full border border-black/8 bg-white p-2 text-brand-onSurfaceVariant shadow-sm">⌕</Link>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <Link href="/en" className="hover:bg-white/10 px-3 py-1.5 rounded transition">English</Link>
+              <Link href="/admin" className="bg-white/20 hover:bg-white/30 px-3.5 py-1.5 rounded transition">لوحة التحكم (CMS)</Link>
             </div>
           </div>
-        </Container>
+        </div>
       </header>
+
+      {/* Categories Navigation Ribbon */}
+      <div className="bg-[#901414] text-white sticky top-0 z-50 shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold whitespace-nowrap scrollbar-none">
+            <Link href="/" className="hover:text-gray-200 border-b-2 border-white pb-0.5">الرئيسية</Link>
+            {categories.map((cat) => (
+              <Link
+                key={cat}
+                href={`/search?category=${cat}`}
+                className="hover:text-gray-200 opacity-90 hover:opacity-100 transition"
+              >
+                {cat === 'Religion' ? 'شؤون دينية' : cat === 'Economy' ? 'مال وأعمال' : cat === 'World' ? 'أخبار العالم' : cat === 'Sports' ? 'الرياضة' : cat === 'Culture' ? 'ثقافة وفنون' : cat}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
 
       {/* Breaking News Ticker */}
       {news.length > 0 && (
-        <div className="border-b border-brand-primary/10 bg-brand-primary text-white py-2.5 overflow-hidden">
+        <div className="border-b border-black/5 bg-[#ffebeb] text-[#bb1919] py-2.5 overflow-hidden">
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-            <span className="shrink-0 bg-gold text-brand-onSurface font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm animate-pulse">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+            <span className="shrink-0 bg-[#bb1919] text-white font-bold text-xs px-3 py-1 rounded flex items-center gap-1.5 shadow-sm animate-pulse">
               عاجل
             </span>
             <div className="relative overflow-hidden w-full h-5" dir="ltr">
@@ -205,9 +223,9 @@ export default function HomePageClient() {
                   <Link
                     key={`ticker-${item.id}`}
                     href={`/news/${item.slug}`}
-                    className="hover:text-gold font-medium text-sm transition flex items-center gap-2"
+                    className="hover:underline font-medium text-sm transition flex items-center gap-2"
                   >
-                    <span className="text-gold">✦</span>
+                    <span className="text-[#bb1919]">✦</span>
                     <span dir="rtl">{item.title}</span>
                   </Link>
                 ))}
@@ -216,9 +234,9 @@ export default function HomePageClient() {
                   <Link
                     key={`ticker-dup-${item.id}`}
                     href={`/news/${item.slug}`}
-                    className="hover:text-gold font-medium text-sm transition flex items-center gap-2"
+                    className="hover:underline font-medium text-sm transition flex items-center gap-2"
                   >
-                    <span className="text-gold">✦</span>
+                    <span className="text-[#bb1919]">✦</span>
                     <span dir="rtl">{item.title}</span>
                   </Link>
                 ))}
@@ -228,111 +246,175 @@ export default function HomePageClient() {
         </div>
       )}
 
+      {/* Main BBC Arabic Style Grid Layout */}
       <Container className="py-6 sm:py-8 lg:py-10">
-        <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="overflow-hidden rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">Live newsroom shell</div>
-            <div className="mt-2 inline-flex rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant">Data source: {sourceLabel}</div>
-            <p className="mt-2 text-xs text-brand-onSurfaceVariant">{message}</p>
-            {lastSync ? <p className="mt-1 text-[11px] text-black/40">Last sync: {lastSync}</p> : null}
-            {heroStory?.cover_image ? (
-              <div className="mt-4 overflow-hidden rounded-[26px] border border-black/6 bg-black/5">
-                <img src={heroStory.cover_image} alt={heroStory.title} className="h-64 w-full object-cover sm:h-80" />
+        <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+          
+          {/* Main Content Area (Right Side) */}
+          <div className="space-y-8">
+            
+            {/* Hero Main Story Card */}
+            {heroStory ? (
+              <div className="bg-white border border-black/5 p-4 sm:p-6 shadow-sm hover:shadow-md transition">
+                <div className="text-xs font-bold text-[#bb1919] mb-2">{heroStory.category}</div>
+                {heroStory.cover_image ? (
+                  <div className="overflow-hidden bg-black/5 mb-4">
+                    <img
+                      src={heroStory.cover_image}
+                      alt={heroStory.title}
+                      className="h-64 w-full object-cover sm:h-96 transition duration-500 hover:scale-105"
+                    />
+                  </div>
+                ) : null}
+                <Link href={`/news/${heroStory.slug}`} className="block group">
+                  <h1 className="font-bold text-[24px] sm:text-[34px] leading-tight text-gray-900 group-hover:text-[#bb1919] transition">
+                    {heroStory.title}
+                  </h1>
+                </Link>
+                <p className="mt-3 text-sm sm:text-base leading-relaxed text-gray-600">
+                  {heroStory.body ? heroStory.body.slice(0, 240) + '...' : 'اقرأ تفاصيل الخبر كاملة لمعرفة آخر المستجدات والتغطيات الحية.'}
+                </p>
+                <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+                  <span>بواسطة: {heroStory.author || 'التحرير'}</span>
+                  <span>المصدر: {sourceLabel === 'fallback' ? 'أرشيف صوت الهند' : 'تغطية حية'}</span>
+                </div>
               </div>
-            ) : null}
-            <h1 className="mt-3 max-w-2xl font-headline-xl-mobile text-[30px] leading-[1.28] tracking-[-0.03em] text-brand-onSurface sm:text-[42px] sm:leading-[1.15]">{heroStory?.title ?? 'Publish your first live story from the admin portal'}</h1>
-            <p className="mt-4 max-w-2xl text-[16px] leading-8 text-brand-onSurfaceVariant sm:text-[18px]">
-              {heroStory ? heroStory.body || 'Latest story loaded from Supabase and ready for your audience.' : 'No live news yet. After publishing from admin, the latest story will show here automatically.'}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/admin" className="rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white">Add live news</Link>
-              <Link href="/admin" className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold">Connect CMS</Link>
+            ) : (
+              <div className="bg-white p-6 border border-dashed border-gray-300 text-center text-gray-500">
+                لا توجد أخبار منشورة حالياً في الصفحة الرئيسية.
+              </div>
+            )}
+
+            {/* Secondary Stories Grid */}
+            {latestNews.length > 0 && (
+              <div>
+                <div className="border-r-4 border-[#bb1919] pr-3 mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">آخر التغطيات والتقارير</h2>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {latestNews.map((item) => (
+                    <div key={item.id} className="bg-white border border-black/5 p-4 shadow-sm hover:shadow transition flex flex-col justify-between">
+                      <div>
+                        {item.cover_image ? (
+                          <div className="overflow-hidden mb-3">
+                            <img src={item.cover_image} alt={item.title} className="h-40 w-full object-cover" />
+                          </div>
+                        ) : null}
+                        <div className="text-[11px] font-bold text-[#bb1919] mb-1">{item.category}</div>
+                        <Link href={`/news/${item.slug}`} className="hover:text-[#bb1919] transition">
+                          <h3 className="font-bold text-base leading-snug text-gray-900 line-clamp-3">
+                            {item.title}
+                          </h3>
+                        </Link>
+                      </div>
+                      <div className="mt-4 pt-2 border-t border-gray-100 text-[10px] text-gray-400">
+                        {item.created_at ? new Date(item.created_at).toLocaleDateString('ar-EG') : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar Area (Left Side) */}
+          <div className="space-y-8">
+            
+            {/* Trending / Most Read Widget */}
+            <div className="bg-white border border-black/5 p-5 shadow-sm">
+              <div className="border-r-4 border-[#bb1919] pr-3 mb-4">
+                <h2 className="text-base font-bold text-gray-900">الأكثر قراءة الآن</h2>
+              </div>
+              
+              {news.length > 0 ? (
+                <div className="divide-y divide-gray-100">
+                  {news.slice(0, 5).map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="py-4 flex gap-4 items-start first:pt-0 last:pb-0">
+                      <span className="text-[36px] font-bold leading-none text-[#bb1919]/20 font-serif">
+                        {index + 1}
+                      </span>
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold text-[#bb1919]">{item.category}</div>
+                        <Link href={`/news/${item.slug}`} className="hover:text-[#bb1919] font-semibold text-xs sm:text-sm text-gray-800 leading-snug block transition">
+                          {item.title}
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">لا تتوفر إحصائيات القراءة حالياً.</p>
+              )}
+            </div>
+
+            {/* Department Tags Category Map */}
+            <div className="bg-white border border-black/5 p-5 shadow-sm">
+              <div className="border-r-4 border-[#bb1919] pr-3 mb-4">
+                <h2 className="text-base font-bold text-gray-900">الأقسام الإخبارية</h2>
+              </div>
+              {categories.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((item) => (
+                    <Link
+                      key={item}
+                      href={`/search?category=${item}`}
+                      className="px-3 py-1.5 bg-[#f6f6f6] hover:bg-[#bb1919] hover:text-white transition text-xs font-semibold text-gray-700"
+                    >
+                      {item === 'Religion' ? 'شؤون دينية' : item === 'Economy' ? 'مال وأعمال' : item === 'World' ? 'عالم' : item === 'Sports' ? 'رياضة' : item === 'Culture' ? 'ثقافة وفنون' : item}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">سيتم رصد الأقسام بمجرد نشر مقالات جديدة.</p>
+              )}
             </div>
           </div>
-
-          <aside className="rounded-[32px] border border-black/6 bg-white p-6 shadow-[0_18px_55px_rgba(17,24,39,0.06)] sm:p-8">
-            <SectionTitle title="Trending" action={news.length > 0 ? 'Live' : 'Empty'} />
-            {news.length > 0 ? (
-              <div className="space-y-3">
-                {news.slice(0, 3).map((item, index) => (
-                  <div key={`${item.id}-${index}`} className="rounded-[22px] border border-black/8 bg-brand-surfaceLow p-4">
-                    <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
-                    {item.cover_image ? <img src={item.cover_image} alt={item.title} className="mt-3 h-28 w-full rounded-2xl object-cover" /> : null}
-                    <div className="mt-1 text-[15px] font-semibold leading-7 text-brand-onSurface">{item.title}</div>
-                    <div className="mt-1 text-xs text-brand-onSurfaceVariant">#{index + 1}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">No trending stories yet. Publish your first article to populate this rail.</div>
-            )}
-          </aside>
-        </section>
-
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-[30px] border border-black/6 bg-white p-5 shadow-[0_12px_35px_rgba(17,24,39,0.05)] sm:p-6">
-            <SectionTitle title="Latest news" action={latestNews.length > 0 ? 'Live' : 'Empty'} />
-            {latestNews.length > 0 ? (
-              <div className="space-y-3">
-                {latestNews.map((item) => (
-                  <div key={item.id} className="rounded-[22px] border border-black/8 p-4">
-                    <div className="text-xs font-semibold text-brand-primary">{item.category}</div>
-                    {item.cover_image ? <img src={item.cover_image} alt={item.title} className="mt-3 h-24 w-full rounded-2xl object-cover" /> : null}
-                    <div className="mt-1 text-[15px] font-semibold leading-7 text-brand-onSurface">{item.title}</div>
-                    <div className="mt-1 text-xs text-brand-onSurfaceVariant">{item.status} • {item.created_at}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">No live news items yet. Use the admin portal to publish your first article.</div>
-            )}
-          </div>
-
-          <div className="rounded-[30px] border border-black/6 bg-white p-5 shadow-[0_12px_35px_rgba(17,24,39,0.05)] sm:p-6">
-            <SectionTitle title="Categories" action={categories.length > 0 ? 'Live' : 'Empty'} />
-            {categories.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {categories.map((item) => (
-                  <div key={item} className="rounded-[22px] border border-dashed border-black/10 bg-brand-surfaceLow p-4">
-                    <div className="text-sm font-semibold text-brand-onSurface">{item}</div>
-                    <div className="mt-1 text-xs text-brand-onSurfaceVariant">Connected to live posts</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-[26px] border border-dashed border-black/10 bg-white p-6 text-sm text-brand-onSurfaceVariant">Categories will appear automatically after publishing news.</div>
-            )}
-          </div>
-        </section>
+          
+        </div>
       </Container>
 
-      <footer className="mt-8 border-t border-black/6 bg-white">
-        <Container className="py-8">
-          <div className="grid gap-8 md:grid-cols-[1.3fr_1fr_1fr]">
+      {/* Premium Footer */}
+      <footer className="border-t-4 border-[#bb1919] bg-[#0f1d25] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="grid gap-8 md:grid-cols-[1.5fr_1fr_1fr]">
             <div>
               <div className="flex items-center gap-3">
-                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-12 w-12 object-contain" />
-                <div className="font-headline-md text-[22px] font-semibold text-brand-primary">جريدة صوت الهند</div>
+                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
+                <span className="font-bold text-xl">صوت الهند إخبارية</span>
               </div>
-              <p className="mt-3 max-w-md text-sm leading-7 text-brand-onSurfaceVariant">Live news portal connected to Supabase. Publish articles from the admin portal and they appear here.</p>
+              <p className="mt-3 max-w-md text-xs sm:text-sm leading-relaxed text-gray-400">
+                منصة صوت الهند الإخبارية تقدم تغطية إخبارية مستقلة ومباشرة على مدار الساعة للأحداث والقضايا الثقافية والسياسية في شبه القارة الهندية والعالم العربي.
+              </p>
             </div>
+            
             <div>
-              <div className="text-sm font-semibold text-brand-onSurface">Quick links</div>
-              <div className="mt-3 space-y-2 text-sm text-brand-onSurfaceVariant">
-                <div>About</div>
-                <div>Privacy</div>
-                <div>Contact</div>
-              </div>
+              <h3 className="text-sm font-bold text-white mb-3">شروط الاستخدام</h3>
+              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
+                <li><Link href="/" className="hover:text-white transition">سياسة الخصوصية</Link></li>
+                <li><Link href="/" className="hover:text-white transition">من نحن</Link></li>
+                <li><Link href="/" className="hover:text-white transition">اتصل بنا</Link></li>
+              </ul>
             </div>
+
             <div>
-              <div className="text-sm font-semibold text-brand-onSurface">Newsletter</div>
-              <div className="mt-3 flex gap-2">
-                <input className="w-full rounded-full border border-black/8 bg-white px-4 py-3 text-sm outline-none" placeholder="Your email" />
-                <button className="rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white">Subscribe</button>
+              <h3 className="text-sm font-bold text-white mb-3">الاشتراك الإخباري</h3>
+              <p className="text-xs text-gray-400 mb-3">اشترك في القائمة البريدية لتلقي آخر العناوين العاجلة.</p>
+              <div className="flex gap-2">
+                <input
+                  className="w-full bg-[#1b2f3a] text-white px-3.5 py-2 text-xs outline-none border border-transparent focus:border-[#bb1919]"
+                  placeholder="البريد الإلكتروني"
+                />
+                <button className="bg-[#bb1919] hover:bg-[#901414] px-4 py-2 text-xs font-bold transition text-white">
+                  اشترك
+                </button>
               </div>
             </div>
           </div>
-        </Container>
+
+          <div className="mt-8 pt-8 border-t border-white/5 text-center text-[11px] text-gray-500">
+            &copy; {new Date().getFullYear()} صوت الهند. جميع الحقوق محفوظة. لا يجوز إعادة نشر المواد دون إذن مسبق.
+          </div>
+        </div>
       </footer>
     </main>
   );
