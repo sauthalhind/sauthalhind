@@ -101,6 +101,38 @@ export default function HomePageClient() {
 
   return (
     <main className="min-h-screen bg-brand-background text-brand-onSurface">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            {
+              '@context': 'https://schema.org',
+              '@type': 'NewsMediaOrganization',
+              name: 'جريدة صوت الهند | Sawt Al-Hind News',
+              alternateName: 'Sawt Al-Hind',
+              url: 'https://sawtalhind.news',
+              logo: 'https://sawtalhind.news/sauthalhind.png',
+              sameAs: [
+                'https://www.facebook.com/sawtalhind',
+                'https://twitter.com/sawtalhind'
+              ],
+              publishingPrinciples: 'https://sawtalhind.news/about',
+              unnamedSourcesPolicy: 'https://sawtalhind.news/privacy'
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'جريدة صوت الهند',
+              url: 'https://sawtalhind.news',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'https://sawtalhind.news/search?q={search_term_string}',
+                'query-input': 'required name=search_term_string'
+              }
+            }
+          ])
+        }}
+      />
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-xl">
         <Container className="py-4">
           <div className="flex items-center justify-between gap-4">
@@ -120,6 +152,43 @@ export default function HomePageClient() {
           </div>
         </Container>
       </header>
+
+      {/* Breaking News Ticker */}
+      {news.length > 0 && (
+        <div className="border-b border-brand-primary/10 bg-brand-primary text-white py-2.5 overflow-hidden">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+            <span className="shrink-0 bg-gold text-brand-onSurface font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm animate-pulse">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+              عاجل
+            </span>
+            <div className="relative overflow-hidden w-full h-5" dir="ltr">
+              <div className="absolute flex gap-12 whitespace-nowrap animate-ticker-rtl hover:[animation-play-state:paused] -right-full">
+                {news.slice(0, 6).map((item) => (
+                  <Link
+                    key={`ticker-${item.id}`}
+                    href={`/news/${item.slug}`}
+                    className="hover:text-gold font-medium text-sm transition flex items-center gap-2"
+                  >
+                    <span className="text-gold">✦</span>
+                    <span dir="rtl">{item.title}</span>
+                  </Link>
+                ))}
+                {/* Repeat to loop seamlessly */}
+                {news.slice(0, 6).map((item) => (
+                  <Link
+                    key={`ticker-dup-${item.id}`}
+                    href={`/news/${item.slug}`}
+                    className="hover:text-gold font-medium text-sm transition flex items-center gap-2"
+                  >
+                    <span className="text-gold">✦</span>
+                    <span dir="rtl">{item.title}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Container className="py-6 sm:py-8 lg:py-10">
         <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">

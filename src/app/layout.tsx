@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { IBM_Plex_Sans_Arabic, Inter, Noto_Kufi_Arabic } from 'next/font/google';
 import './globals.css';
 
@@ -22,6 +22,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
       'max-video-preview': -1
     }
+  },
+  verification: {
+    google: 'yX9e9L7bQ2_7k8F4P8F_L54qIXr-M07zCJABDXg5WehE' // Can also be overridden by NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION env var
   },
   openGraph: {
     title: 'جريدة صوت الهند',

@@ -63,6 +63,20 @@ export default function AdminPage() {
   const authorRef = useRef<HTMLInputElement | null>(null);
   const categoryRef = useRef<HTMLSelectElement | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Custom CMS States
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [previewTab, setPreviewTab] = useState<'edit' | 'preview'>('edit');
+  const [categoriesList, setCategoriesList] = useState<string[]>([
+    'Breaking News', 'Politics', 'World', 'Economy', 'Sports', 'Culture', 'Religion', 'Video'
+  ]);
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoSlug, setSeoSlug] = useState('');
+  const [seoBody, setSeoBody] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
   const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,6 +87,29 @@ export default function AdminPage() {
   const [dataSource, setDataSource] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
   const [debugInfo, setDebugInfo] = useState<{ supabaseConfigured: boolean; newsSource: string; newsCount: number; newsError: string | null; timestamp: string } | null>(null);
   const localNewsKey = 'sawt-al-hind-admin-news';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isAuth = window.sessionStorage.getItem('sawt-al-hind-admin-auth') === 'true';
+      if (isAuth) {
+        setIsAuthenticated(true);
+      }
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPasscode = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || 'admin123';
+    if (passcode === correctPasscode) {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('sawt-al-hind-admin-auth', 'true');
+      }
+      setIsAuthenticated(true);
+      setAuthError('');
+    } else {
+      setAuthError('رمز المرور غير صحيح. يرجى المحاولة مرة أخرى.');
+    }
+  };
 
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -163,6 +200,9 @@ export default function AdminPage() {
     if (bodyRef.current) bodyRef.current.value = item.body ?? '';
     setCoverImage(item.cover_image ?? null);
     setCoverImageName('');
+    setSeoTitle(item.title);
+    setSeoSlug(item.slug);
+    setSeoBody(item.body ?? '');
     flashStatus(`Editing ${item.title}`);
   };
 
@@ -175,6 +215,9 @@ export default function AdminPage() {
     if (bodyRef.current) bodyRef.current.value = '';
     setCoverImage(null);
     setCoverImageName('');
+    setSeoTitle('');
+    setSeoSlug('');
+    setSeoBody('');
     flashStatus('Editor cleared');
   };
 
@@ -399,6 +442,57 @@ export default function AdminPage() {
     void loadDebug();
   }, []);
 
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#0d1b2a] text-white p-4" dir="rtl">
+        <div className="w-full max-w-md bg-[#111827]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00524E]/25 blur-3xl rounded-full"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#D4AF37]/15 blur-3xl rounded-full"></div>
+          
+          <div className="text-center">
+            <img src="/sauthalhind.png" alt="جريدة صوت الهند" className="h-20 w-20 mx-auto object-contain drop-shadow-md" />
+            <h2 className="mt-4 font-headline-md text-2xl font-bold tracking-tight text-white">
+              بوابة الإدارة | CMS Login
+            </h2>
+            <p className="mt-2 text-sm text-white/60">
+              جريدة صوت الهند - نظام إدارة المحتوى
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="mt-8 space-y-6">
+            <div>
+              <label htmlFor="passcode" className="block text-sm font-medium text-white/80 text-right mb-2">
+                رمز المرور (Passcode)
+              </label>
+              <input
+                id="passcode"
+                type="password"
+                required
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="••••••••"
+                className="w-full text-left rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#d3ab57] transition"
+              />
+            </div>
+
+            {authError && (
+              <div className="text-red-400 text-sm text-center bg-red-950/40 border border-red-500/20 py-2.5 px-4 rounded-xl animate-shake">
+                {authError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-[#00524E] border border-[#006C67] hover:bg-[#006A65] py-3.5 text-sm font-semibold text-white transition duration-200"
+            >
+              دخول البوابة
+            </button>
+          </form>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f7f6] text-[#132126]">
       <div className="grid min-h-screen lg:grid-cols-[300px_1fr]">
@@ -483,118 +577,286 @@ export default function AdminPage() {
             </div>
           </header>
 
+          {/* Dynamic Stats Cards */}
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {quickStats.map((stat) => (
-              <div key={stat.label} className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
-                <div className="text-sm text-black/55">{stat.label}</div>
-                <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{stat.value}</div>
-                <div className="mt-4 h-1.5 rounded-full bg-black/6">
-                  <div className="h-1.5 w-0 rounded-full bg-[#0f1d25]" />
-                </div>
+            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
+              <div className="text-sm text-black/55">أخبار منشورة | Published Articles</div>
+              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'published').length}</div>
+              <div className="mt-4 h-1.5 rounded-full bg-black/6">
+                <div className="h-1.5 rounded-full bg-green-600" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'published').length / Math.max(1, savedNews.length)) * 100))}%` }} />
               </div>
-            ))}
+            </div>
+            
+            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
+              <div className="text-sm text-black/55">المسودات | Drafts</div>
+              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'draft').length}</div>
+              <div className="mt-4 h-1.5 rounded-full bg-black/6">
+                <div className="h-1.5 rounded-full bg-yellow-500" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'draft').length / Math.max(1, savedNews.length)) * 100))}%` }} />
+              </div>
+            </div>
+
+            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
+              <div className="text-sm text-black/55">مراجعة المعلقات | Pending Review</div>
+              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'review').length}</div>
+              <div className="mt-4 h-1.5 rounded-full bg-black/6">
+                <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'review').length / Math.max(1, savedNews.length)) * 100))}%` }} />
+              </div>
+            </div>
+
+            <div className="rounded-[26px] border border-black/8 bg-white p-5 shadow-sm">
+              <div className="text-sm text-black/55">مجدولة للنشر | Scheduled Posts</div>
+              <div className="mt-3 text-3xl font-bold tracking-[-0.03em]">{savedNews.filter((item) => item.status === 'scheduled').length}</div>
+              <div className="mt-4 h-1.5 rounded-full bg-black/6">
+                <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${Math.min(100, Math.max(10, (savedNews.filter((item) => item.status === 'scheduled').length / Math.max(1, savedNews.length)) * 100))}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Elegant Publishing Activity Trend Chart */}
+          <div className="mt-6 rounded-[30px] border border-black/8 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold tracking-tight">توزيع الأخبار حسب الأقسام | News Distribution by Category</h3>
+                <p className="text-xs text-brand-onSurfaceVariant mt-1">نسبة التغطية الصحفية الحالية في مختلف الأقسام</p>
+              </div>
+              <span className="text-xs font-semibold text-brand-primary bg-brand-surfaceLow px-3 py-1.5 rounded-full">تحليل فوري</span>
+            </div>
+            <div className="relative h-56 w-full bg-gradient-to-t from-brand-surfaceLow/50 to-white rounded-2xl p-4 flex items-end justify-between border border-black/5 overflow-hidden">
+              <div className="absolute inset-0 flex flex-col justify-between py-6 px-4 pointer-events-none opacity-20">
+                <div className="border-b border-black w-full"></div>
+                <div className="border-b border-black w-full"></div>
+                <div className="border-b border-black w-full"></div>
+              </div>
+              
+              <svg className="absolute inset-x-0 bottom-0 h-28 w-full text-brand-primary/5 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
+                <path d="M0,100 C25,30 50,75 75,25 C90,65 100,10 100,100 Z" fill="currentColor" />
+              </svg>
+
+              {categoriesList.slice(0, 8).map((cat) => {
+                const count = savedNews.filter(n => n.category === cat).length;
+                const percent = Math.min(100, Math.max(8, count * 20));
+                return (
+                  <div key={cat} className="group relative flex flex-col items-center flex-1 h-full justify-end px-1">
+                    <div className="absolute -top-7 bg-[#0f1d25] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition shadow-md pointer-events-none z-10 whitespace-nowrap">
+                      {cat}: {count} خبر
+                    </div>
+                    <div 
+                      style={{ height: `${percent}%` }}
+                      className="w-full max-w-[36px] rounded-t-xl bg-gradient-to-t from-brand-primary to-[#006C67] hover:from-gold hover:to-[#FED65B] transition-all duration-300 cursor-pointer shadow-sm"
+                    />
+                    <span className="mt-2 text-[10px] text-brand-onSurfaceVariant font-medium truncate max-w-[40px] sm:max-w-none">{cat}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
             <div ref={newsRef}>
               <section className="rounded-[30px] border border-black/8 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between border-b border-black/8 pb-3">
-                <h2 className="text-xl font-bold tracking-[-0.02em]">Create and publish</h2>
-                <span className="text-sm font-medium text-[#0f1d25]">News editor</span>
+                <h2 className="text-xl font-bold tracking-[-0.02em]">محرر المقالات | News Editor</h2>
+                <div className="flex gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setPreviewTab('edit')} 
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${previewTab === 'edit' ? 'bg-brand-primary text-white' : 'bg-brand-surfaceLow text-brand-onSurfaceVariant'}`}
+                  >
+                    المحرر
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setPreviewTab('preview')} 
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${previewTab === 'preview' ? 'bg-brand-primary text-white' : 'bg-brand-surfaceLow text-brand-onSurfaceVariant'}`}
+                  >
+                    المعاينة المباشرة
+                  </button>
+                </div>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="space-y-4">
-                  <input ref={titleRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Title" />
-                  <input ref={slugRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Slug" />
-                  <input ref={authorRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" placeholder="Author name" />
-                  <select ref={categoryRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none">
-                    <option>Choose category</option>
-                    <option>Breaking News</option>
-                    <option>Politics</option>
-                    <option>World</option>
-                    <option>Economy</option>
-                    <option>Sports</option>
-                    <option>Culture</option>
-                    <option>Religion</option>
-                    <option>Video</option>
-                  </select>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button type="button" onClick={() => flashStatus('Publishing scheduled')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">
-                      Schedule publish
+              {previewTab === 'preview' ? (
+                <div className="rounded-2xl border border-black/5 bg-[#f4f7f6] p-4 sm:p-6 overflow-hidden">
+                  <div className="text-center mb-4 text-xs font-bold text-brand-primary uppercase tracking-widest border-b border-black/5 pb-2">
+                    معاينة حية للمقال قبل النشر | LIVE PREVIEW
+                  </div>
+                  <div className="mx-auto max-w-2xl bg-white rounded-3xl border border-black/6 shadow-lg overflow-hidden">
+                    {coverImage ? (
+                      <img src={coverImage} alt="Cover preview" className="h-56 w-full object-cover" />
+                    ) : (
+                      <div className="h-52 w-full bg-brand-surfaceLow flex items-center justify-center text-brand-onSurfaceVariant/40 text-sm">
+                        [لم يتم تحديد صورة غلاف بعد]
+                      </div>
+                    )}
+                    <div className="p-6 text-right" dir="rtl">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-semibold text-brand-primary">
+                          {categoryRef.current?.value || 'تصنيف غير محدد'}
+                        </span>
+                        <span className="text-xs text-brand-onSurfaceVariant">الآن</span>
+                      </div>
+                      <h1 className="mt-3 text-2xl font-bold text-brand-onSurface leading-tight">
+                        {seoTitle || 'عنوان المقال الافتراضي'}
+                      </h1>
+                      <div className="mt-2 text-xs text-brand-onSurfaceVariant">
+                        الكاتب: {authorRef.current?.value || 'قسم التحرير'}
+                      </div>
+                      <div className="mt-5 text-sm text-brand-onSurfaceVariant leading-7 whitespace-pre-wrap border-t border-black/5 pt-4">
+                        {seoBody || 'اكتب نص المقال في المحرر لتتمكن من معاينته هنا بشكل مباشر...'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-6 flex justify-end gap-2">
+                    <button type="button" onClick={() => setPreviewTab('edit')} className="rounded-2xl border border-black/10 px-5 py-3 font-semibold text-sm">
+                      العودة للمحرر
                     </button>
-                    <button type="button" onClick={() => flashStatus('Sent for review')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">
-                      Send for review
+                    <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-5 py-3 font-semibold text-[#0f1d25] text-sm disabled:cursor-not-allowed disabled:opacity-60">
+                      نشر المقال فوراً
                     </button>
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-dashed border-black/10 bg-brand-surfaceLow p-4">
-                    <div className="text-sm font-semibold text-brand-onSurface">Cover photo</div>
-                    <p className="mt-1 text-sm text-brand-onSurfaceVariant">
-                      Main image shown at the top of the article and in homepage cards.
-                    </p>
-                    <input
-                      ref={coverPhotoRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        if (!file) return;
-
-                        setCoverImageName(file.name);
-                        const formData = new FormData();
-                        formData.append('bucket', 'news-media');
-                        formData.append('files', file);
-
-                        const response = await fetch('/api/upload', {
-                          method: 'POST',
-                          body: formData
-                        });
-                        const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
-
-                        if (!response.ok || !result.ok) {
-                          flashStatus(result.error ?? 'Cover photo upload failed');
-                          return;
-                        }
-
-                        const url = result.uploaded?.[0]?.url;
-                        if (url) {
-                          setCoverImage(url);
-                          flashStatus(`Cover photo uploaded: ${file.name}`);
-                        }
-                      }}
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-4">
+                    <input 
+                      ref={titleRef} 
+                      onChange={(e) => setSeoTitle(e.target.value)}
+                      defaultValue={seoTitle}
+                      className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" 
+                      placeholder="عنوان الخبر" 
                     />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => coverPhotoRef.current?.click()} className="rounded-full bg-[#0f1d25] px-4 py-2 text-sm font-semibold text-white">
-                        Select cover photo
+                    <input 
+                      ref={slugRef} 
+                      onChange={(e) => setSeoSlug(e.target.value)}
+                      defaultValue={seoSlug}
+                      className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" 
+                      placeholder="الرابط الفرعي (Slug)" 
+                    />
+                    <input 
+                      ref={authorRef} 
+                      defaultValue="قسم التحرير"
+                      className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none" 
+                      placeholder="اسم الكاتب" 
+                    />
+                    <select ref={categoryRef} className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none">
+                      <option value="">اختر القسم</option>
+                      {categoriesList.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button type="button" onClick={() => saveNews('scheduled')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium text-sm">
+                        جدولة النشر
                       </button>
-                      <button type="button" onClick={() => flashStatus('Cover photo attached')} className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold">
-                        Attach
+                      <button type="button" onClick={() => saveNews('review')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium text-sm">
+                        إرسال للمراجعة
                       </button>
                     </div>
-                    {coverImage ? (
-                      <div className="mt-4 overflow-hidden rounded-2xl border border-black/8 bg-white">
-                        <img src={coverImage} alt={coverImageName || 'Cover preview'} className="h-48 w-full object-cover" />
-                        <div className="px-4 py-3 text-xs text-black/60">{coverImageName || 'Selected cover image'}</div>
+
+                    {/* Google SEO Snippet Preview */}
+                    <div className="rounded-2xl border border-black/8 bg-[#f7faf9] p-4 text-right">
+                      <div className="text-xs font-bold text-black/55 mb-2.5 flex items-center justify-between">
+                        <span>عرض نتائج بحث جوجل (معاينة)</span>
+                        <span className="text-[#006C67] font-semibold text-[10px]">Google News Preview</span>
                       </div>
-                    ) : null}
+                      
+                      <div className="bg-white p-3 rounded-xl border border-black/5 font-sans leading-normal text-[13px] text-[#4d5156] text-left" dir="ltr">
+                        <div className="text-[12px] text-[#202124] flex items-center gap-1 mb-1">
+                          <span className="w-4 h-4 rounded-full bg-slate-100 inline-flex items-center justify-center text-[10px]">📰</span>
+                          <div className="truncate">
+                            https://sawtalhind.news <span className="text-gray-400">› news › {seoSlug || 'slug'}</span>
+                          </div>
+                        </div>
+                        <div className="text-[19px] text-[#1a0dab] hover:underline cursor-pointer font-medium truncate mb-1">
+                          {seoTitle || 'عنوان الخبر الرئيسي الذي يظهر في جوجل'} | جريدة صوت الهند
+                        </div>
+                        <div className="text-[14px] text-[#4d5156] line-clamp-2">
+                          {seoBody ? seoBody.slice(0, 155) : 'اكتب نص الخبر في الجهة اليمنى وسيتم هنا عرض مقتطف محركات البحث تلقائياً...'}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-black/55">
+                        <div>
+                          العنوان: <span className={seoTitle.length > 60 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{seoTitle.length}/60 حرف</span>
+                        </div>
+                        <div>
+                          المقتطف: <span className={seoBody.length > 155 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{seoBody.length}/155 حرف</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <textarea
-                    ref={bodyRef}
-                    className="min-h-[250px] w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none"
-                    placeholder="Write the full article here..."
-                  />
-                  <div className="flex flex-wrap gap-3">
-                    <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">Save draft</button>
-                    <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-[#0f1d25] disabled:cursor-not-allowed disabled:opacity-60">Publish now</button>
-                    <button type="button" onClick={resetEditor} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">New post</button>
-                    <button type="button" onClick={() => flashStatus('Preview opened')} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold">Preview</button>
+
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-dashed border-black/10 bg-brand-surfaceLow p-4">
+                      <div className="text-sm font-semibold text-brand-onSurface">صورة الغلاف | Cover Photo</div>
+                      <p className="mt-1 text-xs text-brand-onSurfaceVariant">
+                        الصورة الرئيسية التي تظهر أعلى المقال وفي البطاقات الإخبارية.
+                      </p>
+                      <input
+                        ref={coverPhotoRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+
+                          setCoverImageName(file.name);
+                          const formData = new FormData();
+                          formData.append('bucket', 'news-media');
+                          formData.append('files', file);
+
+                          const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
+
+                          if (!response.ok || !result.ok) {
+                            flashStatus(result.error ?? 'Cover photo upload failed');
+                            return;
+                          }
+
+                          const url = result.uploaded?.[0]?.url;
+                          if (url) {
+                            setCoverImage(url);
+                            flashStatus(`Cover photo uploaded: ${file.name}`);
+                          }
+                        }}
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onClick={() => coverPhotoRef.current?.click()} className="rounded-full bg-[#0f1d25] px-4 py-2 text-xs font-semibold text-white">
+                          اختر صورة
+                        </button>
+                        <button type="button" onClick={() => flashStatus('Cover photo attached')} className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold">
+                          ربط الصورة
+                        </button>
+                      </div>
+                      {coverImage ? (
+                        <div className="mt-4 overflow-hidden rounded-2xl border border-black/8 bg-white">
+                          <img src={coverImage} alt={coverImageName || 'Cover preview'} className="h-48 w-full object-cover" />
+                          <div className="px-4 py-3 text-xs text-black/60">{coverImageName || 'Selected cover image'}</div>
+                        </div>
+                      ) : null}
+                    </div>
+                    
+                    <textarea
+                      ref={bodyRef}
+                      onChange={(e) => setSeoBody(e.target.value)}
+                      defaultValue={seoBody}
+                      className="min-h-[250px] w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3 outline-none text-sm leading-7"
+                      placeholder="اكتب تفاصيل الخبر هنا..."
+                    />
+                    
+                    <div className="flex flex-wrap gap-3">
+                      <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="rounded-2xl bg-[#0f1d25] px-4 py-3 font-semibold text-sm text-white disabled:cursor-not-allowed disabled:opacity-60">حفظ مسودة</button>
+                      <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="rounded-2xl bg-[#d3ab57] px-4 py-3 font-semibold text-sm text-[#0f1d25] disabled:cursor-not-allowed disabled:opacity-60">نشر المقال</button>
+                      <button type="button" onClick={resetEditor} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold text-sm">مقال جديد</button>
+                      <button type="button" onClick={() => setPreviewTab('preview')} className="rounded-2xl border border-black/10 px-4 py-3 font-semibold text-sm">معاينة</button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               </section>
             </div>
 
@@ -664,13 +926,58 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              <div className="mt-6 rounded-[26px] bg-[#f6f8f8] p-4">
-                <div className="text-sm font-semibold text-black/60">Category manager</div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <button type="button" onClick={() => flashStatus('Category action opened')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Add category</button>
-                  <button type="button" onClick={() => flashStatus('Sort order opened')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Sort order</button>
-                  <button type="button" onClick={() => flashStatus('Empty categories hidden')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Hide empty categories</button>
-                  <button type="button" onClick={() => flashStatus('Homepage pin updated')} className="rounded-2xl border border-black/10 px-4 py-3 text-right font-medium">Homepage pin</button>
+              <div className="mt-6 rounded-[26px] bg-[#f6f8f8] p-5 border border-black/5">
+                <div className="text-sm font-semibold text-black/80 mb-3 text-right">مدير الأقسام | Category Manager</div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="اسم القسم الجديد..."
+                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary text-right"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = newCategory.trim();
+                      if (!trimmed) return;
+                      if (categoriesList.includes(trimmed)) {
+                        flashStatus('القسم موجود بالفعل');
+                        return;
+                      }
+                      setCategoriesList([...categoriesList, trimmed]);
+                      setNewCategory('');
+                      flashStatus(`تمت إضافة القسم: ${trimmed}`);
+                    }}
+                    className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-[#006A65] transition shrink-0"
+                  >
+                    إضافة
+                  </button>
+                </div>
+                
+                <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-white rounded-xl border border-black/5 justify-start">
+                  {categoriesList.map((cat) => (
+                    <span 
+                      key={cat} 
+                      className="inline-flex items-center gap-1.5 rounded-full bg-brand-surfaceLow px-3 py-1 text-xs font-semibold text-brand-onSurfaceVariant border border-black/5"
+                    >
+                      {cat}
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          if (categoriesList.length <= 1) {
+                            flashStatus('يجب أن يتبقى قسم واحد على الأقل');
+                            return;
+                          }
+                          setCategoriesList(categoriesList.filter(c => c !== cat));
+                          flashStatus(`تم حذف القسم: ${cat}`);
+                        }}
+                        className="text-red-500 hover:text-red-700 font-bold ml-1"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
                 </div>
               </div>
               </section>
