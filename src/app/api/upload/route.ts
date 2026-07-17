@@ -15,9 +15,10 @@ export async function POST(request: Request) {
   const storageClient = supabaseServer;
 
   try {
-    await storageClient.storage.getBucket(bucket).catch(async () => {
+    const { data: bucketData, error: bucketError } = await storageClient.storage.getBucket(bucket);
+    if (bucketError) {
       await storageClient.storage.createBucket(bucket, { public: true });
-    });
+    }
   } catch {
     // ignore bucket creation issues and continue with upload attempt
   }
