@@ -196,7 +196,7 @@ export default function HomePageClient() {
             {categories.map((cat) => (
               <Link
                 key={cat}
-                href={`/search?category=${cat}`}
+                href={`/category/${encodeURIComponent(cat)}`}
                 className="hover:text-gray-200 opacity-90 hover:opacity-100 transition"
               >
                 {cat === 'Religion' ? 'شؤون دينية' : cat === 'Economy' ? 'مال وأعمال' : cat === 'World' ? 'أخبار العالم' : cat === 'Sports' ? 'الرياضة' : cat === 'Culture' ? 'ثقافة وفنون' : cat}
@@ -353,7 +353,7 @@ export default function HomePageClient() {
                   {categories.map((item) => (
                     <Link
                       key={item}
-                      href={`/search?category=${item}`}
+                      href={`/category/${encodeURIComponent(item)}`}
                       className="px-3 py-1.5 bg-[#f6f6f6] hover:bg-[#bb1919] hover:text-white transition text-xs font-semibold text-gray-700"
                     >
                       {item === 'Religion' ? 'شؤون دينية' : item === 'Economy' ? 'مال وأعمال' : item === 'World' ? 'عالم' : item === 'Sports' ? 'رياضة' : item === 'Culture' ? 'ثقافة وفنون' : item}

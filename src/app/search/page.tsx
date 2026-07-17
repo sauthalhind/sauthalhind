@@ -41,11 +41,11 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold whitespace-nowrap scrollbar-none">
             <Link href="/" className="hover:text-gray-200 border-b-2 border-white pb-0.5">الرئيسية</Link>
-            <Link href="/search?category=Breaking News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار عاجلة</Link>
-            <Link href="/search?category=World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار العالم</Link>
-            <Link href="/search?category=Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">مال وأعمال</Link>
-            <Link href="/search?category=Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">ثقافة وفنون</Link>
-            <Link href="/search?category=Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">الرياضة</Link>
+            <Link href="/category/Breaking%20News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار عاجلة</Link>
+            <Link href="/category/World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار العالم</Link>
+            <Link href="/category/Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">مال وأعمال</Link>
+            <Link href="/category/Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">ثقافة وفنون</Link>
+            <Link href="/category/Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">الرياضة</Link>
           </nav>
         </div>
       </div>

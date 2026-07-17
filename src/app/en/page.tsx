@@ -37,11 +37,11 @@ export default async function EnglishHome() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold whitespace-nowrap scrollbar-none">
             <Link href="/en" className="hover:text-gray-200 border-b-2 border-white pb-0.5">Home</Link>
-            <Link href="/search?category=Breaking News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Breaking News</Link>
-            <Link href="/search?category=World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">World</Link>
-            <Link href="/search?category=Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Economy</Link>
-            <Link href="/search?category=Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Culture</Link>
-            <Link href="/search?category=Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Sports</Link>
+            <Link href="/category/Breaking%20News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Breaking News</Link>
+            <Link href="/category/World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">World</Link>
+            <Link href="/category/Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Economy</Link>
+            <Link href="/category/Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Culture</Link>
+            <Link href="/category/Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">Sports</Link>
           </nav>
         </div>
       </div>

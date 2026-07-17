@@ -59,7 +59,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
             <Link href="/" className="hover:text-gray-200">الرئيسية</Link>
-            <Link href={`/search?category=${encodeURIComponent(article.category)}`} className="hover:text-gray-200">{article.category}</Link>
+            <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:text-gray-200">{article.category}</Link>
           </nav>
         </div>
       </header>
@@ -105,7 +105,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                     '@type': 'ListItem',
                     position: 2,
                     name: article.category,
-                    item: `https://sawtalhind.news/search?q=${encodeURIComponent(article.category)}`
+                    item: `https://sawtalhind.news/category/${encodeURIComponent(article.category)}`
                   },
                   {
                     '@type': 'ListItem',
@@ -122,7 +122,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
         <article className="mx-auto max-w-4xl bg-white border border-gray-200 shadow-sm">
           <div className="p-6 md:p-10">
             <div className="mb-4 text-sm font-bold text-[#bb1919]">
-              <Link href={`/search?category=${encodeURIComponent(article.category)}`} className="hover:underline">
+              <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:underline">
                 {article.category}
               </Link>
             </div>
