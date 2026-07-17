@@ -118,12 +118,9 @@ export default function HomePageClient() {
 
     [...publishedApi, ...publishedLocal].forEach((item) => {
       map.set(item.id, item);
-      if (item.slug) {
-        map.set(item.slug, item);
-      }
     });
 
-    return Array.from(map.values()).filter((item) => item.id === map.get(item.id)?.id).slice(0, 12);
+    return Array.from(map.values()).slice(0, 12);
   }, [apiNews, localNews]);
 
   const heroStory = news[0];
