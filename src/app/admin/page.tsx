@@ -98,6 +98,13 @@ export default function AdminPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      setActiveTab('news');
+    }
+  }, []);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const correctPasscode = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || 'saw@123';
@@ -538,17 +545,17 @@ export default function AdminPage() {
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
       {/* BBC Style Brand Header */}
       <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white p-1 rounded-sm flex items-center justify-center shrink-0">
               <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <span className="font-bold text-lg leading-none">صوت الهند</span>
               <span className="text-[10px] uppercase tracking-widest text-white/80">Newsroom CMS</span>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-sm font-medium">
+          <div className="hidden sm:flex items-center gap-4 text-sm font-medium">
             <span className="bg-white/10 px-3 py-1.5 rounded text-white/90">
               {statusMessage}
             </span>
@@ -556,7 +563,26 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-[280px_1fr] gap-6 items-start">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 grid lg:grid-cols-[280px_1fr] gap-4 sm:gap-6 items-start">
+        <div className="sm:hidden w-full">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-black/5 bg-white p-2 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab('news')}
+              className={`rounded-xl px-3 py-2 text-xs font-bold transition ${activeTab === 'news' ? 'bg-[#bb1919] text-white' : 'bg-gray-50 text-gray-700'}`}
+            >
+              Write
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('dashboard')}
+              className={`rounded-xl px-3 py-2 text-xs font-bold transition ${activeTab === 'dashboard' ? 'bg-[#bb1919] text-white' : 'bg-gray-50 text-gray-700'}`}
+            >
+              Posts
+            </button>
+          </div>
+        </div>
+
         {/* Sidebar Navigation */}
         <aside className="bg-white border border-black/5 p-2 hidden lg:block sticky top-24">
           <nav className="flex flex-col gap-1">
@@ -584,7 +610,7 @@ export default function AdminPage() {
           <div ref={dashboardRef} />
           
           {/* Editor Section */}
-          <section ref={newsRef} className="bg-white border border-black/5 p-6 relative">
+          <section ref={newsRef} className={`bg-white border border-black/5 p-4 sm:p-6 relative ${activeTab === 'news' ? 'block' : 'hidden lg:block'}`}>
             <div className="absolute top-0 right-0 w-full h-1 bg-[#bb1919]"></div>
             <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
@@ -598,14 +624,14 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_300px]">
               {/* Left/Main Editor Col */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <input 
                   ref={titleRef} 
                   onChange={(e) => setSeoTitle(e.target.value)}
                   defaultValue={seoTitle}
-                  className="w-full border border-gray-300 bg-white px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-xl font-bold transition-shadow" 
+                  className="w-full border border-gray-300 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-lg sm:text-xl font-bold transition-shadow" 
                   placeholder="عنوان الخبر..." 
                 />
                 
@@ -613,22 +639,22 @@ export default function AdminPage() {
                   ref={bodyRef}
                   onChange={(e) => setSeoBody(e.target.value)}
                   defaultValue={seoBody}
-                  className="min-h-[300px] w-full border border-gray-300 bg-white px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-sm leading-8 transition-shadow"
+                  className="min-h-[220px] sm:min-h-[300px] w-full border border-gray-300 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-sm leading-7 sm:leading-8 transition-shadow"
                   placeholder="نص المقال يكتب هنا..."
                 />
                 
-                <div className="flex flex-wrap gap-2 pt-4">
-                  <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="bg-[#bb1919] hover:bg-[#a01515] px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm">
+                <div className="flex flex-wrap gap-2 pt-2 sm:pt-4">
+                  <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="bg-[#bb1919] hover:bg-[#a01515] px-4 sm:px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm">
                     نشر المقال فوراً
                   </button>
-                  <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="bg-gray-800 hover:bg-black px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm">
+                  <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="bg-gray-800 hover:bg-black px-4 sm:px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm">
                     حفظ مسودة
                   </button>
                 </div>
               </div>
 
               {/* Right/Meta Col */}
-              <div className="space-y-5 bg-gray-50 p-4 border border-gray-100">
+              <div className="space-y-4 sm:space-y-5 bg-gray-50 p-3 sm:p-4 border border-gray-100">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">الرابط الفرعي (Slug)</label>
                   <input 
@@ -745,39 +771,39 @@ export default function AdminPage() {
           </section>
 
           {/* List of News */}
-          <section className="bg-white border border-black/5 p-6">
-            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-              <h2 className="text-xl font-bold text-black">
+          <section className={`bg-white border border-black/5 p-4 sm:p-6 ${activeTab === 'dashboard' ? 'block' : 'hidden lg:block'}`}>
+            <div className="mb-4 sm:mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-lg sm:text-xl font-bold text-black">
                 الأخبار المنشورة <span key={savedNews.length} translate="no">({savedNews.length})</span>
               </h2>
             </div>
             
             <div className="grid gap-4">
               {savedNews.length === 0 ? (
-                <div className="text-center py-12 text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-200">
+                <div className="text-center py-10 sm:py-12 text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-200">
                   لا توجد أخبار بعد.
                 </div>
               ) : (
                 savedNews.map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white border border-gray-200 p-4 hover:border-gray-300 transition-colors">
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-white border border-gray-200 p-3 sm:p-4 hover:border-gray-300 transition-colors">
                     {item.cover_image && (
-                      <div className="w-full sm:w-32 h-20 shrink-0 bg-gray-100">
+                      <div className="w-full sm:w-32 h-28 sm:h-20 shrink-0 bg-gray-100 overflow-hidden rounded-lg">
                         <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-[10px] font-bold text-[#bb1919] uppercase tracking-wider mb-1">{item.category}</div>
-                      <div className="font-bold text-base text-gray-900 truncate">{item.title}</div>
+                      <div className="font-bold text-sm sm:text-base text-gray-900 break-words">{item.title}</div>
                       <div className="text-xs text-gray-500 mt-1">{item.created_at}</div>
                     </div>
-                    <div className="flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 shrink-0">
                       <a href={`/news/${item.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 transition">عرض الخبر</a>
                       <button type="button" disabled={isSaving} onClick={() => fillFormFromNews(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">تعديل</button>
                       <button type="button" disabled={isSaving} onClick={() => togglePublicDraft(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">
                         {item.status === 'published' ? 'إلى مسودة' : 'نشر'}
                       </button>
                       <button type="button" disabled={isSaving} onClick={() => removeNews(item.id)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 transition">حذف</button>
-                      <span className={`text-[10px] font-bold px-2 py-1 ${item.status === 'published' ? 'bg-[#bb1919] text-white' : 'bg-gray-200 text-gray-600'}`}>
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded ${item.status === 'published' ? 'bg-[#bb1919] text-white' : 'bg-gray-200 text-gray-600'}`}>
                         {item.status === 'published' ? 'منشور' : 'مسودة'}
                       </span>
                     </div>
