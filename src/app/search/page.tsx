@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui';
 import Footer from '@/components/footer';
-import { listNews } from '@/lib/news-store';
+import { listNews, translateCategory } from '@/lib/news-store';
 
 export const metadata: Metadata = {
   title: 'Search | Sawt Al-Hind News',
@@ -78,7 +78,7 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
                     <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                   </div>
                 )}
-                <div className="text-[11px] font-bold text-[#bb1919] mb-1">{item.category}</div>
+                <div className="text-[11px] font-bold text-[#bb1919] mb-1">{translateCategory(item.category)}</div>
                 <h2 className="font-bold text-lg leading-snug text-gray-900 line-clamp-3 group-hover:text-[#bb1919] transition">
                   {item.title}
                 </h2>

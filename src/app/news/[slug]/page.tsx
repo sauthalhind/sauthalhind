@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ShareBar } from '@/components/share-bar';
 import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
-import { getNewsBySlug, listNews } from '@/lib/news-store';
+import { getNewsBySlug, listNews, translateCategory } from '@/lib/news-store';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -75,7 +75,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
             <Link href="/" className="hover:text-gray-200">الرئيسية</Link>
-            <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:text-gray-200">{article.category}</Link>
+            <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:text-gray-200">{translateCategory(article.category)}</Link>
           </nav>
         </div>
       </header>
@@ -142,7 +142,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
               <div className="p-6 md:p-10">
                 <div className="mb-4 text-sm font-bold text-[#bb1919]">
                   <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:underline">
-                    {article.category}
+                    {translateCategory(article.category)}
                   </Link>
                 </div>
                 
@@ -176,7 +176,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
               <section className="mt-10">
                 <div className="flex items-center gap-3 mb-6 border-r-4 border-[#bb1919] pr-3">
                   <h2 className="text-2xl font-bold text-gray-900">أخبار ذات صلة</h2>
-                  <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">{article.category}</span>
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">{translateCategory(article.category)}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {relatedNews.map((item) => (
@@ -190,7 +190,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                       </div>
                       <div className="p-4 flex flex-col flex-1 justify-between">
                         <div>
-                          <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{item.category}</span>
+                          <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{translateCategory(item.category)}</span>
                           <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm">
                             {item.title}
                           </h3>
@@ -223,7 +223,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                         {index + 1}
                       </span>
                       <div className="flex-1">
-                        <span className="text-[10px] font-bold text-[#bb1919] uppercase tracking-wider block mb-0.5">{item.category}</span>
+                        <span className="text-[10px] font-bold text-[#bb1919] uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
                         <h3 className="font-bold text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-2">
                           {item.title}
                         </h3>
@@ -260,7 +260,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   </div>
                   <div className="p-4 flex flex-col flex-1 justify-between">
                     <div>
-                      <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{item.category}</span>
+                      <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{translateCategory(item.category)}</span>
                       <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm">
                         {item.title}
                       </h3>

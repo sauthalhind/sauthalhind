@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Container } from '@/components/ui';
+import { translateCategory } from '@/lib/news-store';
 
 type NewsItem = {
   id: string;
@@ -199,7 +200,7 @@ export default function HomePageClient() {
                 href={`/category/${encodeURIComponent(cat)}`}
                 className="hover:text-gray-200 opacity-90 hover:opacity-100 transition"
               >
-                {cat === 'Religion' ? 'شؤون دينية' : cat === 'Economy' ? 'مال وأعمال' : cat === 'World' ? 'أخبار العالم' : cat === 'Sports' ? 'الرياضة' : cat === 'Culture' ? 'ثقافة وفنون' : cat}
+                {translateCategory(cat)}
               </Link>
             ))}
           </nav>
@@ -252,7 +253,7 @@ export default function HomePageClient() {
             {/* Hero Main Story Card */}
             {heroStory ? (
               <div className="bg-white border border-black/5 p-4 sm:p-6 shadow-sm hover:shadow-md transition">
-                <div className="text-xs font-bold text-[#bb1919] mb-2">{heroStory.category}</div>
+                <div className="text-xs font-bold text-[#bb1919] mb-2">{translateCategory(heroStory.category)}</div>
                 {heroStory.cover_image ? (
                   <div className="overflow-hidden bg-black/5 mb-4">
                     <img
@@ -296,7 +297,7 @@ export default function HomePageClient() {
                             <img src={item.cover_image} alt={item.title} className="h-40 w-full object-cover" />
                           </div>
                         ) : null}
-                        <div className="text-[11px] font-bold text-[#bb1919] mb-1">{item.category}</div>
+                        <div className="text-[11px] font-bold text-[#bb1919] mb-1">{translateCategory(item.category)}</div>
                         <Link href={`/news/${item.slug}`} className="hover:text-[#bb1919] transition">
                           <h3 className="font-bold text-base leading-snug text-gray-900 line-clamp-3">
                             {item.title}
@@ -330,7 +331,7 @@ export default function HomePageClient() {
                         {index + 1}
                       </span>
                       <div className="space-y-1">
-                        <div className="text-[10px] font-bold text-[#bb1919]">{item.category}</div>
+                        <div className="text-[10px] font-bold text-[#bb1919]">{translateCategory(item.category)}</div>
                         <Link href={`/news/${item.slug}`} className="hover:text-[#bb1919] font-semibold text-xs sm:text-sm text-gray-800 leading-snug block transition">
                           {item.title}
                         </Link>
@@ -356,7 +357,7 @@ export default function HomePageClient() {
                       href={`/category/${encodeURIComponent(item)}`}
                       className="px-3 py-1.5 bg-[#f6f6f6] hover:bg-[#bb1919] hover:text-white transition text-xs font-semibold text-gray-700"
                     >
-                      {item === 'Religion' ? 'شؤون دينية' : item === 'Economy' ? 'مال وأعمال' : item === 'World' ? 'عالم' : item === 'Sports' ? 'رياضة' : item === 'Culture' ? 'ثقافة وفنون' : item}
+                      {translateCategory(item)}
                     </Link>
                   ))}
                 </div>

@@ -298,3 +298,39 @@ export async function getNewsById(id: string) {
 
   return { ok: true as const, item: withCover.data as NewsRecord | null };
 }
+
+export function translateCategory(cat?: string | null): string {
+  if (!cat) return '';
+  const clean = cat.trim();
+  const lower = clean.toLowerCase();
+
+  switch (lower) {
+    case 'breaking news':
+    case 'breaking':
+    case ' عاجل':
+    case 'عاجل':
+      return 'أخبار عاجلة';
+    case 'world':
+      return 'أخبار العالم';
+    case 'economy':
+    case 'business':
+    case 'الاقتصاد':
+      return 'مال وأعمال';
+    case 'sports':
+    case 'sport':
+      return 'الرياضة';
+    case 'culture':
+    case 'arts':
+      return 'ثقافة وفنون';
+    case 'religion':
+    case 'islamic':
+      return 'شؤون دينية';
+    case 'politics':
+      return 'سياسة';
+    case 'video':
+      return 'فيديو';
+    default:
+      return clean;
+  }
+}
+
