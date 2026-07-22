@@ -135,7 +135,9 @@ export default async function NewsArticlePage({ params }: PageProps) {
                     url: `${baseUrl}/sauthalhind.png`
                   }
                 },
-                image: article.cover_image ? [article.cover_image] : undefined,
+                image: article.cover_image 
+                  ? [article.cover_image.startsWith('http') ? article.cover_image : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`]
+                  : [`${baseUrl}/sauthalhind.png`],
                 mainEntityOfPage: `${baseUrl}/news/${article.slug}`
               },
               {

@@ -228,40 +228,49 @@ export async function deleteNews(id: string) {
 }
 
 export async function getNewsBySlug(slug: string) {
-  if (!supabaseServer) {
-    return { ok: false as const, error: 'Supabase is not configured yet.' };
-  }
-
   const decodedSlug = decodeURIComponent(slug);
 
-  const withCover = await supabaseServer
-    .from('news')
-    .select('id,title,slug,author,category,body,cover_image,status,created_at')
-    .eq('slug', decodedSlug)
-    .maybeSingle();
-
-  if (withCover.error?.message?.toLowerCase().includes('cover_image')) {
-    const fallback = await supabaseServer
+  if (supabaseServer) {
+    let withCover = await supabaseServer
       .from('news')
-      .select('id,title,slug,author,category,body,status,created_at')
+      .select('id,title,slug,author,category,body,cover_image,status,created_at')
       .eq('slug', decodedSlug)
       .maybeSingle();
 
-    if (fallback.error) {
-      return { ok: false as const, error: fallback.error.message };
+    if (!withCover.data && decodedSlug !== slug) {
+      withCover = await supabaseServer
+        .from('news')
+        .select('id,title,slug,author,category,body,cover_image,status,created_at')
+        .eq('slug', slug)
+        .maybeSingle();
     }
 
-    return {
-      ok: true as const,
-      item: fallback.data ? ({ ...fallback.data, cover_image: null } as NewsRecord) : null
-    };
+    if (withCover.error?.message?.toLowerCase().includes('cover_image')) {
+      const fallback = await supabaseServer
+        .from('news')
+        .select('id,title,slug,author,category,body,status,created_at')
+        .eq('slug', decodedSlug)
+        .maybeSingle();
+
+      if (fallback.data) {
+        return {
+          ok: true as const,
+          item: { ...fallback.data, cover_image: null } as NewsRecord
+        };
+      }
+    }
+
+    if (withCover.data) {
+      return { ok: true as const, item: withCover.data as NewsRecord };
+    }
   }
 
-  if (withCover.error) {
-    return { ok: false as const, error: withCover.error.message };
+  const seedMatch = SEED_NEWS.find((item) => item.slug === slug || item.slug === decodedSlug);
+  if (seedMatch) {
+    return { ok: true as const, item: seedMatch };
   }
 
-  return { ok: true as const, item: withCover.data as NewsRecord | null };
+  return { ok: true as const, item: null };
 }
 
 export async function getNewsById(id: string) {
