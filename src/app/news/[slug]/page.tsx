@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ShareBar } from '@/components/share-bar';
 import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
-import { getNewsBySlug } from '@/lib/news-store';
+import { getNewsBySlug, listNews } from '@/lib/news-store';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -45,6 +45,17 @@ export default async function NewsArticlePage({ params }: PageProps) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const url = `${baseUrl}/news/${article.slug}`;
   const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();
+
+  // Fetch other news for recommendations
+  const newsListResult = await listNews();
+  const allNews = newsListResult.ok ? newsListResult.items.filter(i => i.status === 'published' && i.slug !== article.slug) : [];
+  
+  // Related news (same category)
+  const relatedNews = allNews.filter(i => i.category === article.category).slice(0, 3);
+  
+  // Latest / Recommended news
+  const relatedIds = new Set(relatedNews.map(i => i.id));
+  const latestNews = allNews.filter(i => !relatedIds.has(i.id)).slice(0, 6);
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
@@ -153,6 +164,74 @@ export default async function NewsArticlePage({ params }: PageProps) {
             </div>
           </div>
         </article>
+
+        {/* Related Articles Section */}
+        {relatedNews.length > 0 && (
+          <section className="mx-auto max-w-4xl mt-12">
+            <div className="flex items-center gap-3 mb-6 border-r-4 border-[#bb1919] pr-3">
+              <h2 className="text-2xl font-bold text-gray-900">أخبار ذات صلة</h2>
+              <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">{article.category}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {relatedNews.map((item) => (
+                <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+                  <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
+                    {item.cover_image ? (
+                      <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold">بدون صورة</div>
+                    )}
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{item.category}</span>
+                      <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-base">
+                        {item.title}
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-gray-400 mt-3 block">
+                      {new Date(item.created_at || Date.now()).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Latest & Recommended News Section */}
+        {latestNews.length > 0 && (
+          <section className="mx-auto max-w-4xl mt-12">
+            <div className="flex items-center justify-between mb-6 border-r-4 border-gray-900 pr-3">
+              <h2 className="text-2xl font-bold text-gray-900">أحدث الأخبار والتغطيات</h2>
+              <Link href="/search" className="text-xs font-bold text-[#bb1919] hover:underline">عرض الكل &larr;</Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {latestNews.map((item) => (
+                <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+                  <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
+                    {item.cover_image ? (
+                      <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold">بدون صورة</div>
+                    )}
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{item.category}</span>
+                      <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-base">
+                        {item.title}
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-gray-400 mt-3 block">
+                      {new Date(item.created_at || Date.now()).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </Container>
       <Footer />
     </main>
