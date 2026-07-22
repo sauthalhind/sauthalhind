@@ -171,6 +171,34 @@ export default async function NewsArticlePage({ params }: PageProps) {
               </div>
             </article>
 
+            {/* Top News Section for Mobile Screens */}
+            <div className="lg:hidden mt-10 bg-white border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-[#bb1919]">
+                <span className="text-xl">🔥</span>
+                <h2 className="text-xl font-bold text-gray-900">أهم الأخبار</h2>
+              </div>
+              <div className="space-y-4">
+                {topNews.map((item, index) => (
+                  <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                    <span className="text-2xl font-extrabold text-[#bb1919] group-hover:text-black transition w-6 text-center leading-none mt-1">
+                      {index + 1}
+                    </span>
+                    <div className="flex-1">
+                      <span className="text-[10px] font-bold text-[#bb1919] uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
+                      <h3 className="font-bold text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-2">
+                        {item.title}
+                      </h3>
+                    </div>
+                    {item.cover_image && (
+                      <div className="w-14 h-14 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
+                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             {/* Related Articles Section */}
             {relatedNews.length > 0 && (
               <section className="mt-10">
