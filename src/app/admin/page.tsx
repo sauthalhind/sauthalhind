@@ -218,7 +218,11 @@ export default function AdminPage() {
     setSeoTitle(item.title);
     setSeoSlug(item.slug);
     setSeoBody(item.body ?? '');
+    setActiveTab('news');
     flashStatus(`جاري التعديل: ${item.title}`);
+    window.setTimeout(() => {
+      newsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   const resetEditor = () => {
@@ -354,7 +358,15 @@ export default function AdminPage() {
     }
   };
 
-  const removeNews = async (id: string) => {
+  const removeNews = async (id: string, title?: string) => {
+    const confirmMsg = title 
+      ? `هل أنت تأكد من إزالة هذا المقال من المجموع؟\n\n"${title}"`
+      : 'هل أنت تأكد من إزالة هذا المقال؟';
+
+    if (typeof window !== 'undefined' && !window.confirm(confirmMsg)) {
+      return;
+    }
+
     const originalSavedNews = savedNews;
     const originalLocalNews = readLocalNews();
     
@@ -614,12 +626,21 @@ export default function AdminPage() {
             <div className="absolute top-0 right-0 w-full h-1 bg-[#bb1919]"></div>
             <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
-                <h2 className="text-2xl font-bold text-black">محرر الأخبار</h2>
-                <p className="text-sm text-gray-500 mt-1">اكتب وانشر الأخبار بشكل فوري</p>
+                <h2 className="text-2xl font-bold text-black flex items-center gap-2">
+                  محرر الأخبار
+                  {editingId && (
+                    <span className="text-xs bg-[#bb1919] text-white font-semibold px-2.5 py-0.5 rounded-full animate-pulse">
+                      جاري تعديل المقال
+                    </span>
+                  )}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {editingId ? 'أنت تقوم الآن بتعديل الخبر المحدد' : 'اكتب وانشر الأخبار بشكل فوري'}
+                </p>
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={resetEditor} className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 font-bold text-black transition">
-                  مقال جديد
+                  {editingId ? 'إلغاء التعديل / مقال جديد' : 'مقال جديد'}
                 </button>
               </div>
             </div>
@@ -802,7 +823,7 @@ export default function AdminPage() {
                       <button type="button" disabled={isSaving} onClick={() => togglePublicDraft(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">
                         {item.status === 'published' ? 'إلى مسودة' : 'نشر'}
                       </button>
-                      <button type="button" disabled={isSaving} onClick={() => removeNews(item.id)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 transition">حذف</button>
+                      <button type="button" disabled={isSaving} onClick={() => removeNews(item.id, item.title)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 transition">حذف</button>
                       <span className={`text-[10px] font-bold px-2 py-1 rounded ${item.status === 'published' ? 'bg-[#bb1919] text-white' : 'bg-gray-200 text-gray-600'}`}>
                         {item.status === 'published' ? 'منشور' : 'مسودة'}
                       </span>
