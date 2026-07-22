@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Sans_Arabic, Inter, Noto_Kufi_Arabic } from 'next/font/google';
+import { Cairo, Noto_Naskh_Arabic, Amiri, Inter } from 'next/font/google';
 import './globals.css';
 
-const arabic = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-arabic' });
+const cairo = Cairo({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700', '800', '900'], variable: '--font-cairo' });
+const naskh = Noto_Naskh_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-naskh' });
+const amiri = Amiri({ subsets: ['arabic', 'latin'], weight: ['400', '700'], variable: '--font-amiri' });
 const english = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-english' });
-const kufi = Noto_Kufi_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-kufi' });
 
 export const metadata: Metadata = {
   title: 'جريدة صوت الهند | Sawt Al-Hind News',
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${arabic.variable} ${english.variable} ${kufi.variable}`}>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${naskh.variable} ${amiri.variable} ${english.variable}`}>
       <body>{children}</body>
     </html>
   );

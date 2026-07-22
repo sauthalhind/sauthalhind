@@ -15,7 +15,7 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-arabic), sans-serif;
+  font-family: var(--font-cairo), var(--font-naskh), system-ui, -apple-system, sans-serif;
   background: #f7faf9;
   color: #181c1c;
 }

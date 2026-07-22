@@ -13,22 +13,47 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const result = await getNewsBySlug(slug);
-  const title = result.ok && result.item ? result.item.title : slug.replace(/-/g, ' ');
+  const article = result.ok ? result.item : null;
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
+  const title = article ? article.title : slug.replace(/-/g, ' ');
+  const description = article?.body 
+    ? article.body.slice(0, 180).replace(/\s+/g, ' ').trim() + '...'
+    : 'جريدة صوت الهند - منصة أخبار عربية مستقلة مع تغطية فورية وتحليلات';
+  
+  let imageUrl = `${baseUrl}/sauthalhind.png`;
+  if (article?.cover_image) {
+    imageUrl = article.cover_image.startsWith('http') 
+      ? article.cover_image 
+      : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`;
+  }
+
+  const pageUrl = `${baseUrl}/news/${slug}`;
 
   return {
     title: `${title} | جريدة صوت الهند`,
-    description: 'Arabic news article page with share controls.',
-    alternates: { canonical: `/news/${slug}` },
+    description,
+    alternates: { canonical: pageUrl },
     openGraph: {
       title,
-      description: 'Arabic news article page with share controls.',
+      description,
       type: 'article',
-      url: `/news/${slug}`
+      url: pageUrl,
+      siteName: 'جريدة صوت الهند | Sawt Al-Hind News',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title
+        }
+      ]
     },
     twitter: {
       card: 'summary_large_image',
       title,
-      description: 'Arabic news article page with share controls.'
+      description,
+      images: [imageUrl]
     }
   };
 }
