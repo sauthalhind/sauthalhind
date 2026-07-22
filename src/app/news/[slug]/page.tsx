@@ -12,23 +12,28 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const result = await getNewsBySlug(slug);
+  const decodedSlug = decodeURIComponent(slug);
+  const result = await getNewsBySlug(decodedSlug);
   const article = result.ok ? result.item : null;
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
-  const title = article ? article.title : slug.replace(/-/g, ' ');
+  const title = article ? article.title : decodedSlug.replace(/-/g, ' ');
   const description = article?.body 
     ? article.body.slice(0, 180).replace(/\s+/g, ' ').trim() + '...'
     : 'جريدة صوت الهند - منصة أخبار عربية مستقلة مع تغطية فورية وتحليلات';
   
-  let imageUrl = `${baseUrl}/sauthalhind.png`;
+  let rawImageUrl = `${baseUrl}/sauthalhind.png`;
   if (article?.cover_image) {
-    imageUrl = article.cover_image.startsWith('http') 
-      ? article.cover_image 
-      : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`;
+    const cleanImg = article.cover_image.trim();
+    if (cleanImg.startsWith('http://') || cleanImg.startsWith('https://')) {
+      rawImageUrl = cleanImg;
+    } else {
+      rawImageUrl = `${baseUrl}${cleanImg.startsWith('/') ? '' : '/'}${cleanImg}`;
+    }
   }
 
-  const pageUrl = `${baseUrl}/news/${slug}`;
+  const imageUrl = encodeURI(rawImageUrl);
+  const pageUrl = `${baseUrl}/news/${encodeURIComponent(decodedSlug)}`;
 
   return {
     title: `${title} | جريدة صوت الهند`,
@@ -43,6 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       images: [
         {
           url: imageUrl,
+          secureUrl: imageUrl,
           width: 1200,
           height: 630,
           alt: title
