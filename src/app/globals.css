@@ -15,13 +15,13 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-amiri), var(--font-naskh), "Traditional Arabic", "Simplified Arabic", serif;
+  font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
   background: #f7faf9;
   color: #181c1c;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-amiri), var(--font-naskh), serif;
+  font-family: var(--font-cairo), sans-serif;
 }
 
 * {

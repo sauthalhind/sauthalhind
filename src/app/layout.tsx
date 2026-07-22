@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { Cairo, Noto_Naskh_Arabic, Amiri, Inter } from 'next/font/google';
+import { Cairo, Inter } from 'next/font/google';
 import './globals.css';
 
 const cairo = Cairo({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700', '800', '900'], variable: '--font-cairo' });
-const naskh = Noto_Naskh_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-naskh' });
-const amiri = Amiri({ subsets: ['arabic', 'latin'], weight: ['400', '700'], variable: '--font-amiri' });
 const english = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-english' });
 
 export const metadata: Metadata = {
@@ -43,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${naskh.variable} ${amiri.variable} ${english.variable}`}>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${english.variable}`}>
       <body>{children}</body>
     </html>
   );
