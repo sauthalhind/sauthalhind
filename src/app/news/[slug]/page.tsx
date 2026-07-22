@@ -41,6 +41,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const article = result.item;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const url = `${baseUrl}/news/${article.slug}`;
   const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();
