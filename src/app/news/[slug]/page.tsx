@@ -41,8 +41,8 @@ export default async function NewsArticlePage({ params }: PageProps) {
     notFound();
   }
 
-  const article = result.item;
-  const url = `https://sawtalhind.vercel.app/news/${article.slug}`;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
+  const url = `${baseUrl}/news/${article.slug}`;
   const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();
 
   return (
@@ -86,11 +86,11 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   name: 'جريدة صوت الهند',
                   logo: {
                     '@type': 'ImageObject',
-                    url: 'https://sawtalhind.news/sauthalhind.png'
+                    url: `${baseUrl}/sauthalhind.png`
                   }
                 },
                 image: article.cover_image ? [article.cover_image] : undefined,
-                mainEntityOfPage: `https://sawtalhind.news/news/${article.slug}`
+                mainEntityOfPage: `${baseUrl}/news/${article.slug}`
               },
               {
                 '@context': 'https://schema.org',
@@ -100,19 +100,19 @@ export default async function NewsArticlePage({ params }: PageProps) {
                     '@type': 'ListItem',
                     position: 1,
                     name: 'الرئيسية',
-                    item: 'https://sawtalhind.news'
+                    item: baseUrl
                   },
                   {
                     '@type': 'ListItem',
                     position: 2,
                     name: article.category,
-                    item: `https://sawtalhind.news/category/${encodeURIComponent(article.category)}`
+                    item: `${baseUrl}/category/${encodeURIComponent(article.category)}`
                   },
                   {
                     '@type': 'ListItem',
                     position: 3,
                     name: article.title,
-                    item: `https://sawtalhind.news/news/${article.slug}`
+                    item: `${baseUrl}/news/${article.slug}`
                   }
                 ]
               }

@@ -42,8 +42,8 @@ export default function ContactPage() {
             <div className="bg-gray-50 p-6 border border-gray-100 rounded-lg mt-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">معلومات الاتصال</h3>
               <ul className="space-y-3 font-medium">
-                <li><strong className="text-gray-900">البريد الإلكتروني للإدارة:</strong> info@sawtalhind.news</li>
-                <li><strong className="text-gray-900">قسم التحرير والأخبار:</strong> news@sawtalhind.news</li>
+                <li><strong className="text-gray-900">البريد الإلكتروني للإدارة:</strong> info@sauthalhind.com</li>
+                <li><strong className="text-gray-900">قسم التحرير والأخبار:</strong> news@sauthalhind.com</li>
               </ul>
             </div>
           </div>

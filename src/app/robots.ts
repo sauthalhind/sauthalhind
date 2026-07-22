@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/'
     },
-    sitemap: 'https://sawtalhind.news/sitemap.xml'
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'}/sitemap.xml`
   };
 }

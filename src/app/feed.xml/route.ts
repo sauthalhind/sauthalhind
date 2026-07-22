@@ -5,7 +5,7 @@ export async function GET() {
   const result = await listNews();
   const articles = result.ok ? result.items.filter(item => item.status === 'published') : [];
 
-  const baseUrl = 'https://sawtalhind.news';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
 
   const rssItems = articles.map(item => `
     <item>

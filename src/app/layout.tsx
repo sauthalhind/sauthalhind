@@ -9,7 +9,7 @@ const kufi = Noto_Kufi_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '5
 export const metadata: Metadata = {
   title: 'جريدة صوت الهند | Sawt Al-Hind News',
   description: 'منصة أخبار عربية احترافية متعددة اللغات مع تغطية فورية وتحليلات ووسائط.',
-  metadataBase: new URL('https://sawtalhind.news'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'),
   alternates: { languages: { ar: '/', en: '/en' } },
   keywords: ['أخبار', 'صحافة عربية', 'أخبار الهند', 'أخبار عربية', 'أخبار عاجلة', 'رياضة', 'اقتصاد', 'ديني'],
   robots: {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     description: 'منصة أخبار عربية احترافية متعددة اللغات.',
     type: 'website',
     locale: 'ar_AR',
-    url: 'https://sawtalhind.news'
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'
   },
   twitter: {
     card: 'summary_large_image',

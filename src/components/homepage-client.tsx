@@ -145,23 +145,23 @@ export default function HomePageClient() {
               '@type': 'NewsMediaOrganization',
               name: 'جريدة صوت الهند | Sawt Al-Hind News',
               alternateName: 'Sawt Al-Hind',
-              url: 'https://sawtalhind.news',
-              logo: 'https://sawtalhind.news/sauthalhind.png',
+              url: 'https://sauthalhind.com',
+              logo: 'https://sauthalhind.com/sauthalhind.png',
               sameAs: [
                 'https://www.facebook.com/sawtalhind',
                 'https://twitter.com/sawtalhind'
               ],
-              publishingPrinciples: 'https://sawtalhind.news/about',
-              unnamedSourcesPolicy: 'https://sawtalhind.news/privacy'
+              publishingPrinciples: 'https://sauthalhind.com/about',
+              unnamedSourcesPolicy: 'https://sauthalhind.com/privacy'
             },
             {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: 'جريدة صوت الهند',
-              url: 'https://sawtalhind.news',
+              url: 'https://sauthalhind.com',
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://sawtalhind.news/search?q={search_term_string}',
+                target: 'https://sauthalhind.com/search?q={search_term_string}',
                 'query-input': 'required name=search_term_string'
               }
             }

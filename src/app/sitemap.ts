@@ -1,7 +1,7 @@
 import { listNews } from '@/lib/news-store';
 
 export default async function sitemap() {
-  const baseUrl = 'https://sawtalhind.news';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const result = await listNews();
   const articles = result.ok ? result.items : [];
 
