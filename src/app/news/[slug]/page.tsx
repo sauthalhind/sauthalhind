@@ -213,7 +213,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
               <div className="bg-white border border-gray-200 p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-[#bb1919]">
                   <span className="text-xl">🔥</span>
-                  <h2 className="text-xl font-bold text-gray-900">الأخبار الأكثر قراءة</h2>
+                  <h2 className="text-xl font-bold text-gray-900">أهم الأخبار</h2>
                 </div>
 
                 <div className="space-y-4">

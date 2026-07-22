@@ -320,7 +320,10 @@ export default function HomePageClient() {
             {/* Trending / Most Read Widget */}
             <div className="bg-white border border-black/5 p-5 shadow-sm">
               <div className="border-r-4 border-[#bb1919] pr-3 mb-4">
-                <h2 className="text-base font-bold text-gray-900">الأكثر قراءة الآن</h2>
+                <h2 className="text-base font-bold text-gray-900 flex items-center gap-1.5 font-sans">
+                  <span className="w-2 h-2 rounded-full bg-[#bb1919] animate-ping"></span>
+                  أهم الأخبار
+                </h2>
               </div>
               
               {news.length > 0 ? (
