@@ -1,18 +1,42 @@
 export default function Loading() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-brand-background px-6 text-brand-onSurface">
-      <div className="w-full max-w-md rounded-[32px] border border-black/6 bg-white p-8 text-center shadow-[0_18px_55px_rgba(17,24,39,0.06)]">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-surfaceLow">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-primary/20 border-t-brand-primary" />
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#fafafa] px-6 dir-rtl">
+      <div className="flex flex-col items-center justify-center text-center max-w-sm w-full">
+        {/* Animated Brand Logo Container */}
+        <div className="relative mb-6 flex items-center justify-center">
+          {/* Outer glowing pulsing ring */}
+          <div className="absolute inset-0 rounded-2xl bg-[#bb1919]/10 animate-ping opacity-75" />
+          
+          {/* Logo Card */}
+          <div className="relative z-10 w-24 h-24 bg-white border-2 border-[#bb1919] rounded-2xl p-3 shadow-lg shadow-[#bb1919]/10 flex items-center justify-center">
+            <img 
+              src="/sauthalhind.png" 
+              alt="صوت الهند - Sawt Al-Hind Logo" 
+              className="w-full h-full object-contain animate-pulse" 
+            />
+          </div>
+
+          {/* Sleek Spinner Ring around logo */}
+          <div className="absolute -inset-2 rounded-3xl border-2 border-transparent border-t-[#bb1919] border-r-[#bb1919]/40 animate-spin" />
         </div>
-        <div className="mt-6 text-[22px] font-semibold tracking-[-0.02em]">Loading news...</div>
-        <p className="mt-2 text-sm leading-7 text-brand-onSurfaceVariant">
-          Getting the latest stories, categories, and admin data ready.
+
+        {/* Arabic Brand Title */}
+        <h1 className="text-2xl font-black text-gray-900 tracking-tight font-cairo mb-1">
+          جريدة صوت الهند
+        </h1>
+        <p className="text-xs font-bold text-[#bb1919] tracking-wider uppercase mb-6">
+          Sawt Al-Hind News
         </p>
-        <div className="mt-6 space-y-3">
-          <div className="h-4 animate-pulse rounded-full bg-black/8" />
-          <div className="h-4 w-5/6 animate-pulse rounded-full bg-black/8" />
-          <div className="h-4 w-4/6 animate-pulse rounded-full bg-black/8" />
+
+        {/* Loading Indicator Pill */}
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm mb-6">
+          <span className="w-2 h-2 rounded-full bg-[#bb1919] animate-ping" />
+          <span className="text-xs font-bold text-gray-700 font-cairo">جاري تحميل الأخبار...</span>
+        </div>
+
+        {/* Sleek Animated Progress Bar */}
+        <div className="w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden relative">
+          <div className="h-full bg-[#bb1919] rounded-full w-2/3 animate-[pulse_1s_infinite] transition-all" />
         </div>
       </div>
     </main>
