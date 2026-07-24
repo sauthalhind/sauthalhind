@@ -368,9 +368,67 @@ export default function HomePageClient() {
                 <p className="text-xs text-gray-400">سيتم رصد الأقسام بمجرد نشر مقالات جديدة.</p>
               )}
             </div>
+
+            {/* More News Sidebar Widget (To fill empty space) */}
+            <div className="bg-white border border-black/5 p-5 shadow-sm hidden lg:block">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-900">
+                <span className="text-xl">📰</span>
+                <h2 className="text-xl font-bold text-gray-900">المزيد من الأخبار</h2>
+              </div>
+              <div className="space-y-4">
+                {news.slice(5, 12).map((item) => (
+                  <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                    <div className="flex-1">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
+                      <h3 className="font-bold text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-3">
+                        {item.title}
+                      </h3>
+                    </div>
+                    {item.cover_image && (
+                      <div className="w-16 h-16 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
+                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
           
         </div>
+
+        {/* Latest News Grid Below */}
+        {news.length > 0 && (
+          <section className="mt-14 pt-8 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-6 border-r-4 border-gray-900 pr-3">
+              <h2 className="text-2xl font-bold text-gray-900">أخبار أخرى</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {news.slice(12, 20).map((item) => (
+                <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+                  <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
+                    {item.cover_image ? (
+                      <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold">بدون صورة</div>
+                    )}
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{translateCategory(item.category)}</span>
+                      <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm">
+                        {item.title}
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-gray-400 mt-3 block">
+                      {new Date(item.created_at || Date.now()).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </Container>
 
       {/* Premium Footer */}
