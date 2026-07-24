@@ -298,6 +298,32 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   ))}
                 </div>
               </div>
+
+              {/* More News Sidebar Widget (To fill empty space) */}
+              <div className="bg-white border border-gray-200 p-5 shadow-sm hidden lg:block">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-900">
+                  <span className="text-xl">📰</span>
+                  <h2 className="text-xl font-bold text-gray-900">المزيد من الأخبار</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {latestNews.slice(0, 6).map((item) => (
+                    <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                      <div className="flex-1">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
+                        <h3 className="font-bold text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-3">
+                          {item.title}
+                        </h3>
+                      </div>
+                      {item.cover_image && (
+                        <div className="w-16 h-16 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
+                          <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
