@@ -1,7 +1,5 @@
-"use client";
-
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Container } from '@/components/ui';
 import { translateCategory } from '@/lib/news-store';
 
@@ -17,123 +15,13 @@ type NewsItem = {
   author?: string;
 };
 
-function SectionTitle({ title, action }: { title: string; action?: string }) {
-  return (
-    <div className="mb-4 flex items-end justify-between border-b border-black/8 pb-3">
-      <h2 className="font-headline-md text-[20px] font-semibold tracking-[-0.01em] text-brand-onSurface">{title}</h2>
-      {action ? <span className="text-sm font-medium text-brand-primary">{action}</span> : null}
-    </div>
-  );
-}
-
-function normalizeNewsItem(item: NewsItem) {
-  return { ...item, slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-') };
-}
-const localNewsKey = 'sawt-al-hind-admin-news';
-
-function readLocalNews(): NewsItem[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(localNewsKey) ?? '[]') as NewsItem[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export default function HomePageClient() {
-  const [apiNews, setApiNews] = useState<NewsItem[]>([]);
-  const [localNews, setLocalNews] = useState<NewsItem[]>([]);
-  const [sourceState, setSourceState] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
-  const [message, setMessage] = useState('Loading live newsroom...');
-  const [lastSync, setLastSync] = useState('');
-
-  useEffect(() => {
-    const syncLocal = () => setLocalNews(readLocalNews());
-    syncLocal();
-    window.addEventListener('storage', syncLocal);
-    const interval = window.setInterval(syncLocal, 2000);
-    return () => {
-      window.removeEventListener('storage', syncLocal);
-      window.clearInterval(interval);
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadNews = async () => {
-      try {
-        const response = await fetch('/api/news', { cache: 'no-store' });
-        const result = (await response.json()) as
-          | { ok: true; items: NewsItem[]; source?: string }
-          | { ok: false; error?: string };
-
-        if (!mounted) return;
-
-        if (response.ok && result.ok) {
-          const published = result.items.map(normalizeNewsItem).filter((item) => item.status === 'published');
-          setApiNews(published);
-          setSourceState(result.source === 'fallback' ? 'fallback' : 'supabase');
-          setMessage(result.source === 'fallback' ? 'Using fallback data' : 'Connected to Supabase live data');
-          setLastSync(new Date().toISOString());
-        } else {
-          setApiNews([]);
-          setSourceState('fallback');
-          setMessage('No published stories available yet');
-        }
-      } catch {
-        if (!mounted) return;
-        setApiNews([]);
-        setSourceState('error');
-        setMessage('Unable to load live news');
-      }
-    };
-
-    const refresh = () => void loadNews();
-    const interval = window.setInterval(refresh, 15000);
-    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sawt-al-hind-news') : null;
-
-    window.addEventListener('news-updated', refresh as EventListener);
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    channel?.addEventListener('message', refresh as EventListener);
-
-    refresh();
-
-    return () => {
-      mounted = false;
-      window.clearInterval(interval);
-      window.removeEventListener('news-updated', refresh as EventListener);
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);
-      channel?.removeEventListener('message', refresh as EventListener);
-      channel?.close();
-    };
-  }, []);
-
-  const news = useMemo(() => {
-    const publishedApi = apiNews.filter((item) => item.status === 'published');
-    const publishedLocal = localNews.filter((item) => item.status === 'published');
-    const map = new Map<string, NewsItem>();
-
-    [...publishedApi, ...publishedLocal].forEach((item) => {
-      map.set(item.id, item);
-    });
-
-    return Array.from(map.values()).slice(0, 12);
-  }, [apiNews, localNews]);
-
+export default function HomePageClient({ news }: { news: NewsItem[] }) {
   const heroStory = news[0];
   const latestNews = news.slice(1, 5);
-  const categories = Array.from(new Set(news.map((item) => item.category))).slice(0, 6);
-
-  const sourceLabel = useMemo(() => {
-    if (sourceState === 'loading') return 'loading';
-    if (sourceState === 'supabase') return 'supabase';
-    if (sourceState === 'fallback') return 'fallback';
-    return 'error';
-  }, [sourceState]);
+  // Extract unique categories, max 6
+  const categories = Array.from(new Set(news.map((item) => item.category).filter(Boolean))).slice(0, 6);
+  
+  const sourceLabel = 'supabase'; // Assuming it's server-rendered successfully if props exist
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
@@ -273,7 +161,7 @@ export default function HomePageClient() {
                 </p>
                 <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
                   <span>بواسطة: {heroStory.author || 'التحرير'}</span>
-                  <span>المصدر: {sourceLabel === 'fallback' ? 'أرشيف صوت الهند' : 'تغطية حية'}</span>
+                  <span>المصدر: تغطية حية</span>
                 </div>
               </div>
             ) : (

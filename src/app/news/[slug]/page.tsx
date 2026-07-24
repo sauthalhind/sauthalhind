@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShareBar } from '@/components/share-bar';
 import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
@@ -63,6 +64,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   };
 }
+
+export const revalidate = 60; // ISR revalidation
 
 export default async function NewsArticlePage({ params }: PageProps) {
   const { slug } = await params;
@@ -193,8 +196,15 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 </div>
 
                 {article.cover_image && (
-                  <div className="mb-8 relative">
-                    <img src={article.cover_image} alt={article.title} className="w-full h-auto max-h-[500px] object-cover" />
+                  <div className="mb-8 relative w-full aspect-video max-h-[500px] overflow-hidden rounded-sm">
+                    <Image 
+                      src={article.cover_image.startsWith('http') ? article.cover_image : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`} 
+                      alt={article.title} 
+                      fill 
+                      priority
+                      className="object-cover" 
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
                   </div>
                 )}
 

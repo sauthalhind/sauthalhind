@@ -1,9 +1,13 @@
 import { listNews } from '@/lib/news-store';
 import { NextResponse } from 'next/server';
 
+export const revalidate = 60;
+
 export async function GET() {
   const result = await listNews();
-  const articles = result.ok ? result.items.filter(item => item.status === 'published') : [];
+  const articles = result.ok 
+    ? result.items.filter(item => item.status === 'published').slice(0, 50) 
+    : [];
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
 
