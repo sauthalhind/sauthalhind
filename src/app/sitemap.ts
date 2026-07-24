@@ -5,17 +5,27 @@ export default async function sitemap() {
   const result = await listNews();
   const articles = result.ok ? result.items : [];
 
+  const publishedArticles = articles.filter(item => item.status === 'published');
+  
+  // Extract unique categories
+  const categories = Array.from(new Set(publishedArticles.map(item => item.category).filter(Boolean)));
+
   return [
     {
       url: `${baseUrl}/`,
       changeFrequency: 'hourly',
       priority: 1
     },
-
-    ...articles.map((item) => ({
+    ...categories.map((category) => ({
+      url: `${baseUrl}/category/${encodeURIComponent(category!)}`,
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+      lastModified: new Date()
+    })),
+    ...publishedArticles.map((item) => ({
       url: `${baseUrl}/news/${item.slug}`,
       changeFrequency: 'daily' as const,
-      priority: item.status === 'published' ? 0.9 : 0.3,
+      priority: 0.9,
       lastModified: item.created_at ? new Date(item.created_at) : new Date()
     }))
   ];

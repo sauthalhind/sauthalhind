@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: 'منصة أخبار عربية احترافية متعددة اللغات مع تغطية فورية وتحليلات ووسائط.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'),
   alternates: { languages: { ar: '/', en: '/en' } },
-  keywords: ['أخبار', 'صحافة عربية', 'أخبار الهند', 'أخبار عربية', 'أخبار عاجلة', 'رياضة', 'اقتصاد', 'ديني'],
+  keywords: ['أخبار', 'صحافة عربية', 'أخبار الهند', 'صوت الهند', 'جريدة صوت الهند', 'أخبار عاجلة', 'Sawt Al-Hind News', 'South Alhind News', 'Sauthalhind', 'Indian News in Arabic', 'India News'],
   robots: {
     index: true,
     follow: true,
@@ -42,6 +42,24 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} ${english.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Sawt Al-Hind News | جريدة صوت الهند',
+              alternateName: ['South Alhind News', 'Sawt Al Hind', 'Sauthalhind', 'صوت الهند'],
+              url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com',
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'}/sauthalhind.png`,
+              sameAs: [
+                // Add social media links here if they have any
+              ]
+            })
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
