@@ -27,7 +27,7 @@ ${publishedNews.map(item => `
     <loc>${baseUrl}/news/${item.slug}</loc>
     <news:news>
       <news:publication>
-        <news:name>Sawt Al-Hind News</news:name>
+        <news:name>Sauthalhind</news:name>
         <news:language>ar</news:language>
       </news:publication>
       <news:publication_date>${new Date(item.created_at).toISOString()}</news:publication_date>

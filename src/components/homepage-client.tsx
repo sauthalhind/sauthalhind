@@ -32,8 +32,8 @@ export default function HomePageClient({ news }: { news: NewsItem[] }) {
             {
               '@context': 'https://schema.org',
               '@type': 'NewsMediaOrganization',
-              name: 'جريدة صوت الهند | Sawt Al-Hind News',
-              alternateName: 'Sawt Al-Hind',
+              name: 'جريدة صوت الهند | Sauthalhind',
+              alternateName: 'Sauthalhind',
               url: 'https://sauthalhind.com',
               logo: 'https://sauthalhind.com/sauthalhind.png',
               sameAs: [
@@ -66,7 +66,7 @@ export default function HomePageClient({ news }: { news: NewsItem[] }) {
               <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
               <div>
                 <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
-                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sawt Al-Hind News</span>
+                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sauthalhind</span>
               </div>
             </div>
 

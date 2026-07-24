@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Footer from '@/components/footer';
 
 export const metadata = {
-  title: 'من نحن | Sawt Al-Hind News',
+  title: 'من نحن | Sauthalhind',
   description: 'معلومات عن جريدة صوت الهند',
 };
 
@@ -22,7 +22,7 @@ export default function AboutPage() {
                 <Link href="/">
                   <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
                 </Link>
-                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sawt Al-Hind News</span>
+                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sauthalhind</span>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">
@@ -37,7 +37,7 @@ export default function AboutPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-6 border-b-2 border-[#bb1919] inline-block pb-2">من نحن</h1>
           
           <div className="prose prose-sm sm:prose text-gray-700 leading-relaxed">
-            <p><strong>جريدة صوت الهند (Sawt Al-Hind News)</strong> هي منصة إعلامية وإخبارية رائدة تهدف إلى تقديم تغطية شاملة وموثوقة لأهم الأحداث في الهند والعالم العربي وعلى المستوى الدولي.</p>
+            <p><strong>جريدة صوت الهند (Sauthalhind)</strong> هي منصة إعلامية وإخبارية رائدة تهدف إلى تقديم تغطية شاملة وموثوقة لأهم الأحداث في الهند والعالم العربي وعلى المستوى الدولي.</p>
             
             <h3 className="text-xl font-bold text-gray-900 mt-6 mb-3">رؤيتنا</h3>
             <p>نسعى لنكون الجسر الإعلامي الأبرز الذي يربط بين الهند والعالم العربي، من خلال تقديم محتوى إخباري يتسم بالشفافية والموضوعية والاحترافية العالية.</p>

@@ -11,7 +11,7 @@ export default function Loading() {
           <div className="relative z-10 w-24 h-24 bg-white border-2 border-[#bb1919] rounded-2xl p-3 shadow-lg shadow-[#bb1919]/10 flex items-center justify-center">
             <img 
               src="/sauthalhind.png" 
-              alt="صوت الهند - Sawt Al-Hind Logo" 
+              alt="صوت الهند - Sauthalhind Logo" 
               className="w-full h-full object-contain animate-pulse" 
             />
           </div>
@@ -25,7 +25,7 @@ export default function Loading() {
           جريدة صوت الهند
         </h1>
         <p className="text-xs font-bold text-[#bb1919] tracking-wider uppercase mb-6">
-          Sawt Al-Hind News
+          Sauthalhind
         </p>
 
         {/* Loading Indicator Pill */}

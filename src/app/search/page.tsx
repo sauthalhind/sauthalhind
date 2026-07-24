@@ -5,7 +5,7 @@ import Footer from '@/components/footer';
 import { listNews, translateCategory } from '@/lib/news-store';
 
 export const metadata: Metadata = {
-  title: 'Search | Sawt Al-Hind News',
+  title: 'Search | Sauthalhind',
   description: 'Search live news articles.',
   alternates: { canonical: '/search' }
 };
@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
               <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
               <div>
                 <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
-                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sawt Al-Hind News</span>
+                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sauthalhind</span>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">

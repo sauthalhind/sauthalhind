@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: 'article',
       url: pageUrl,
-      siteName: 'جريدة صوت الهند | Sawt Al-Hind News',
+      siteName: 'جريدة صوت الهند | Sauthalhind',
       images: [
         {
           url: imageUrl,

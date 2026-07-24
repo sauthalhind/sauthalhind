@@ -5,7 +5,7 @@ import { listNews } from '@/lib/news-store';
 import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
-  title: 'Sawt Al-Hind News | English',
+  title: 'Sauthalhind | English',
   description: 'English view of the news portal.',
   alternates: { canonical: '/en' }
 };
@@ -22,7 +22,7 @@ export default async function EnglishHome() {
             <div className="flex items-center gap-4 text-white">
               <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
               <div>
-                <span className="font-bold text-xl sm:text-2xl tracking-tight">Sawt Al-Hind News</span>
+                <span className="font-bold text-xl sm:text-2xl tracking-tight">Sauthalhind</span>
                 <span className="text-[10px] opacity-75 ml-2 tracking-widest hidden sm:inline uppercase">English Edition</span>
               </div>
             </div>

@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const decodedSlug = decodeURIComponent(slug);
   const title = translateCategory(decodedSlug);
   return {
-    title: `${title} | Sawt Al-Hind News`,
+    title: `${title} | Sauthalhind`,
     description: `Latest news for ${title}`,
   };
 }
@@ -59,7 +59,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 <Link href="/">
                   <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
                 </Link>
-                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sawt Al-Hind News</span>
+                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sauthalhind</span>
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">

@@ -3,7 +3,7 @@ import HomePageClient from '@/components/homepage-client';
 import { listNews } from '@/lib/news-store';
 
 export const metadata: Metadata = {
-  title: 'جريدة صوت الهند | Sawt Al-Hind News',
+  title: 'جريدة صوت الهند | Sauthalhind',
   description: 'منصة أخبار عربية احترافية مع تغطية فورية وتحليلات ووسائط.',
   alternates: { canonical: '/' }
 };

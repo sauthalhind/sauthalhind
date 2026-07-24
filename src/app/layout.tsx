@@ -6,11 +6,11 @@ const cairo = Cairo({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600'
 const english = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-english' });
 
 export const metadata: Metadata = {
-  title: 'جريدة صوت الهند | Sawt Al-Hind News',
+  title: 'جريدة صوت الهند | Sauthalhind',
   description: 'منصة أخبار عربية احترافية متعددة اللغات مع تغطية فورية وتحليلات ووسائط.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'),
   alternates: { languages: { ar: '/', en: '/en' } },
-  keywords: ['أخبار', 'صحافة عربية', 'أخبار الهند', 'صوت الهند', 'جريدة صوت الهند', 'أخبار عاجلة', 'Sawt Al-Hind News', 'South Alhind News', 'Sauthalhind', 'Indian News in Arabic', 'India News'],
+  keywords: ['أخبار', 'صحافة عربية', 'أخبار الهند', 'صوت الهند', 'جريدة صوت الهند', 'أخبار عاجلة', 'Sauthalhind', 'South Alhind News', 'Sauthalhind', 'Indian News in Arabic', 'India News'],
   robots: {
     index: true,
     follow: true,
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'Sawt Al-Hind News | جريدة صوت الهند',
+              name: 'Sauthalhind | جريدة صوت الهند',
               alternateName: ['South Alhind News', 'Sawt Al Hind', 'Sauthalhind', 'صوت الهند'],
               url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com',
               logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com'}/sauthalhind.png`,
