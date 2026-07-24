@@ -376,7 +376,7 @@ export default function HomePageClient() {
                 <h2 className="text-xl font-bold text-gray-900">المزيد من الأخبار</h2>
               </div>
               <div className="space-y-4">
-                {news.slice(5, 12).map((item) => (
+                {news.slice(1, 6).map((item) => (
                   <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
                     <div className="flex-1">
                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
@@ -404,7 +404,7 @@ export default function HomePageClient() {
               <h2 className="text-2xl font-bold text-gray-900">أخبار أخرى</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {news.slice(12, 20).map((item) => (
+              {news.slice(0, 8).map((item) => (
                 <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
                   <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
                     {item.cover_image ? (
