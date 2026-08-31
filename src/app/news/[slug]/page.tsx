@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { ShareBar } from '@/components/share-bar';
 import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
-import { getNewsBySlug, listNews, translateCategory } from '@/lib/news-store';
+import { ArticleBody } from '@/components/article-body';
+import { getNewsBySlug, listNews, translateCategory, getArticleExcerpt } from '@/lib/news-store';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const title = article ? article.title : decodedSlug.replace(/-/g, ' ');
   const description = article?.body 
-    ? article.body.slice(0, 180).replace(/\s+/g, ' ').trim() + '...'
+    ? getArticleExcerpt(article.body, 180)
     : 'جريدة صوت الهند - منصة أخبار عربية مستقلة مع تغطية فورية وتحليلات';
   
   let rawImageUrl = `${baseUrl}/sauthalhind.png`;
@@ -123,7 +124,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 '@context': 'https://schema.org',
                 '@type': 'NewsArticle',
                 headline: article.title,
-                description: article.body?.slice(0, 160) || article.title,
+                description: getArticleExcerpt(article.body, 160) || article.title,
                 datePublished: publishedDate,
                 dateModified: publishedDate,
                 author: {
@@ -208,9 +209,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   </div>
                 )}
 
-                <div className="whitespace-pre-wrap text-lg md:text-xl leading-loose text-gray-800">
-                  {article.body || 'لا يوجد محتوى في هذا المقال.'}
-                </div>
+                <ArticleBody content={article.body} />
               </div>
             </article>
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui';
-import { translateCategory } from '@/lib/news-store';
+import { translateCategory, getArticleExcerpt } from '@/lib/news-store';
 
 type NewsItem = {
   id: string;
@@ -157,7 +157,7 @@ export default function HomePageClient({ news }: { news: NewsItem[] }) {
                   </h1>
                 </Link>
                 <p className="mt-3 text-sm sm:text-base leading-relaxed text-gray-600">
-                  {heroStory.body ? heroStory.body.slice(0, 240) + '...' : 'اقرأ تفاصيل الخبر كاملة لمعرفة آخر المستجدات والتغطيات الحية.'}
+                  {getArticleExcerpt(heroStory.body, 240) || 'اقرأ تفاصيل الخبر كاملة لمعرفة آخر المستجدات والتغطيات الحية.'}
                 </p>
                 <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
                   <span>بواسطة: {heroStory.author || 'التحرير'}</span>

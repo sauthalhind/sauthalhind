@@ -343,3 +343,38 @@ export function translateCategory(cat?: string | null): string {
   }
 }
 
+/**
+ * Strips all markdown image tags, links, headings, and formatting for clean plain text.
+ */
+export function stripMarkdown(content?: string | null): string {
+  if (!content) return '';
+  return content
+    // Remove Markdown image syntax: ![caption](url)
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    // Remove [image: url | caption] syntax
+    .replace(/\[image:\s*[^|\]]+(?:\|\s*([^\]]*))?\]/gi, '')
+    // Remove HTML img tags
+    .replace(/<img[^>]*>/gi, '')
+    // Remove links [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove markdown headers ##
+    .replace(/^#+\s+/gm, '')
+    // Remove blockquotes >
+    .replace(/^>\s+/gm, '')
+    // Remove bold/italics
+    .replace(/[*_~`]{1,3}/g, '')
+    // Collapse multiple whitespaces and newlines
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Returns a clean, trimmed plain text excerpt from article body
+ */
+export function getArticleExcerpt(content?: string | null, length: number = 180): string {
+  const plain = stripMarkdown(content);
+  if (!plain) return '';
+  if (plain.length <= length) return plain;
+  return plain.slice(0, length).trim() + '...';
+}
+

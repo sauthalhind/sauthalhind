@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui';
-import { listNews } from '@/lib/news-store';
+import { listNews, getArticleExcerpt } from '@/lib/news-store';
 import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
@@ -73,7 +73,7 @@ export default async function EnglishHome() {
                       </h2>
                     </Link>
                     <p className="text-sm text-gray-600 line-clamp-3">
-                      {item.body || 'Live story from Supabase.'}
+                      {getArticleExcerpt(item.body, 140) || 'Live story from Supabase.'}
                     </p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">

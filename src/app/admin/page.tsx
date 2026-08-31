@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
+import { ArticleBody } from '@/components/article-body';
 
 const menu = [
   'Dashboard',
@@ -63,12 +64,14 @@ export default function AdminPage() {
   const authorRef = useRef<HTMLInputElement | null>(null);
   const categoryRef = useRef<HTMLSelectElement | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const inlineFileInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Custom CMS States
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState('');
-  const [previewTab, setPreviewTab] = useState<'edit' | 'preview'>('edit');
+  const [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
   const [categoriesList, setCategoriesList] = useState<string[]>([
     'Breaking News', 'Politics', 'World', 'Economy', 'Sports', 'Culture', 'Religion', 'Video'
   ]);
@@ -77,6 +80,18 @@ export default function AdminPage() {
   const [seoBody, setSeoBody] = useState('');
   const [newCategory, setNewCategory] = useState('');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'news' | 'categories' | 'media'>('dashboard');
+
+  // In-text Image Modal States
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [inlineImageFile, setInlineImageFile] = useState<File | null>(null);
+  const [inlineImageUrl, setInlineImageUrl] = useState('');
+  const [inlineImageCaption, setInlineImageCaption] = useState('');
+  const [isUploadingInline, setIsUploadingInline] = useState(false);
+
+  // Multi-image Gallery Modal States
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [galleryItems, setGalleryItems] = useState<Array<{ file?: File; url: string; caption: string }>>([]);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
   const [statusMessage, setStatusMessage] = useState('Ready for live publishing');
   const [savedNews, setSavedNews] = useState<Array<{ id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }>>([]);
@@ -237,7 +252,123 @@ export default function AdminPage() {
     setSeoTitle('');
     setSeoSlug('');
     setSeoBody('');
+    setEditorMode('edit');
     flashStatus('تم مسح المحرر');
+  };
+
+  const insertAtCursor = (textToInsert: string) => {
+    const textarea = bodyRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    const current = textarea.value;
+
+    const updated = current.substring(0, start) + textToInsert + current.substring(end);
+    textarea.value = updated;
+    setSeoBody(updated);
+
+    textarea.focus();
+    const newPos = start + textToInsert.length;
+    setTimeout(() => {
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  const handleInsertInlineImage = async () => {
+    let finalUrl = inlineImageUrl.trim();
+
+    if (inlineImageFile) {
+      setIsUploadingInline(true);
+      flashStatus('جاري رفع صورة المقال...');
+      const formData = new FormData();
+      formData.append('bucket', 'news-media');
+      formData.append('files', inlineImageFile);
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
+        if (!response.ok || !result.ok || !result.uploaded?.[0]?.url) {
+          flashStatus(result.error ?? 'فشل رفع الصورة');
+          setIsUploadingInline(false);
+          return;
+        }
+        finalUrl = result.uploaded[0].url;
+      } catch (err) {
+        console.error('handleInsertInlineImage failed', err);
+        flashStatus('خطأ أثناء رفع الصورة');
+        setIsUploadingInline(false);
+        return;
+      } finally {
+        setIsUploadingInline(false);
+      }
+    }
+
+    if (!finalUrl) {
+      flashStatus('يرجى اختيار صورة أو إدخال رابط');
+      return;
+    }
+
+    const caption = inlineImageCaption.trim();
+    const markdown = `\n\n![${caption}](${finalUrl})\n\n`;
+    insertAtCursor(markdown);
+
+    setShowImageModal(false);
+    setInlineImageFile(null);
+    setInlineImageUrl('');
+    setInlineImageCaption('');
+    flashStatus('تم إدراج الصورة بنجاح في المقال');
+  };
+
+  const handleInsertGallery = async () => {
+    if (galleryItems.length === 0) {
+      flashStatus('يرجى إضافة صورة واحدة على الأقل للمعرض');
+      return;
+    }
+
+    setIsUploadingGallery(true);
+    flashStatus('جاري رفع صور المعرض...');
+
+    try {
+      const resolvedGallery: Array<{ url: string; caption: string }> = [];
+
+      for (const item of galleryItems) {
+        if (item.file) {
+          const formData = new FormData();
+          formData.append('bucket', 'news-media');
+          formData.append('files', item.file);
+
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const json = await res.json();
+          if (res.ok && json.ok && json.uploaded?.[0]?.url) {
+            resolvedGallery.push({ url: json.uploaded[0].url, caption: item.caption });
+          }
+        } else if (item.url) {
+          resolvedGallery.push({ url: item.url, caption: item.caption });
+        }
+      }
+
+      if (resolvedGallery.length === 0) {
+        flashStatus('تعذر رفع صور المعرض');
+        return;
+      }
+
+      // Build gallery block markdown
+      const galleryMd = '\n\n' + resolvedGallery.map((g) => `![${g.caption.trim()}](${g.url.trim()})`).join('\n') + '\n\n';
+      insertAtCursor(galleryMd);
+
+      setShowGalleryModal(false);
+      setGalleryItems([]);
+      flashStatus(`تم إدراج معرض من ${resolvedGallery.length} صور في المقال`);
+    } catch (err) {
+      console.error('handleInsertGallery failed', err);
+      flashStatus('حدث خطأ أثناء إدراج المعرض');
+    } finally {
+      setIsUploadingGallery(false);
+    }
   };
 
   const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
@@ -655,14 +786,103 @@ export default function AdminPage() {
                   className="w-full border border-gray-300 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-lg sm:text-xl font-bold transition-shadow" 
                   placeholder="عنوان الخبر..." 
                 />
+
+                {/* Rich In-Text Formatting & Media Insertion Toolbar */}
+                <div className="border border-gray-200 bg-[#f9f9f9] p-2 flex flex-wrap items-center justify-between gap-2 rounded-t-sm">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowImageModal(true)}
+                      className="inline-flex items-center gap-1.5 bg-white hover:bg-[#ffebeb] text-gray-800 hover:text-[#bb1919] border border-gray-300 hover:border-[#bb1919] px-3 py-1.5 rounded text-xs font-bold transition shadow-xs"
+                      title="إدراج صورة بين الفقرات مع تعليق"
+                    >
+                      <span className="text-sm">📷</span>
+                      <span>صورة بين الفقرات</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowGalleryModal(true)}
+                      className="inline-flex items-center gap-1.5 bg-white hover:bg-[#ffebeb] text-gray-800 hover:text-[#bb1919] border border-gray-300 hover:border-[#bb1919] px-3 py-1.5 rounded text-xs font-bold transition shadow-xs"
+                      title="إدراج معرض صور متعددة"
+                    >
+                      <span className="text-sm">🖼️</span>
+                      <span>معرض صور متعددة</span>
+                    </button>
+
+                    <div className="h-5 w-[1px] bg-gray-300 mx-1 hidden sm:block"></div>
+
+                    <button
+                      type="button"
+                      onClick={() => insertAtCursor('\n\n## عنوان فرعي هنا\n\n')}
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
+                      title="إدراج عنوان فرعي"
+                    >
+                      📌 عنوان فرعي
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => insertAtCursor('\n\n> نص الاقتباس المميز هنا...\n\n')}
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
+                      title="إدراج اقتباس"
+                    >
+                      💬 اقتباس
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => insertAtCursor('\n\n---\n\n')}
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
+                      title="إدراج خط فاصل"
+                    >
+                      ➖ فاصل
+                    </button>
+                  </div>
+
+                  {/* Edit / Live Preview Switcher */}
+                  <div className="flex items-center bg-gray-200 p-0.5 rounded text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setEditorMode('edit')}
+                      className={`px-3 py-1 rounded transition ${editorMode === 'edit' ? 'bg-[#bb1919] text-white shadow-xs' : 'text-gray-600 hover:text-black'}`}
+                    >
+                      ✏️ تحرير
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorMode('preview')}
+                      className={`px-3 py-1 rounded transition ${editorMode === 'preview' ? 'bg-[#bb1919] text-white shadow-xs' : 'text-gray-600 hover:text-black'}`}
+                    >
+                      👁️ معاينة مباشرة
+                    </button>
+                  </div>
+                </div>
                 
-                <textarea
-                  ref={bodyRef}
-                  onChange={(e) => setSeoBody(e.target.value)}
-                  defaultValue={seoBody}
-                  className="min-h-[220px] sm:min-h-[300px] w-full border border-gray-300 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-sm leading-7 sm:leading-8 transition-shadow"
-                  placeholder="نص المقال يكتب هنا..."
-                />
+                {editorMode === 'edit' ? (
+                  <div>
+                    <textarea
+                      ref={bodyRef}
+                      onChange={(e) => setSeoBody(e.target.value)}
+                      defaultValue={seoBody}
+                      className="min-h-[260px] sm:min-h-[350px] w-full border border-gray-300 border-t-0 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-sm sm:text-base leading-7 sm:leading-8 transition-shadow font-sans"
+                      placeholder="نص المقال يكتب هنا... يمكنك استخدام زر '📷 صورة بين الفقرات' أعلاه لوضع صور متعددة بتعليقاتها في أي مكان."
+                    />
+                    <div className="mt-1 flex items-center justify-between text-xs text-gray-500 px-1">
+                      <span>💡 اضغط على زر 📷 صورة بين الفقرات لإدراج صور بتعليقاتها أينما تشاء داخل المقال.</span>
+                      <span>{seoBody ? seoBody.length : 0} حرف</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border border-gray-300 border-t-0 bg-white p-4 sm:p-6 min-h-[350px]">
+                    <div className="border-b border-gray-200 pb-3 mb-4">
+                      <span className="text-xs font-bold text-[#bb1919] bg-[#ffebeb] px-2 py-0.5 rounded">
+                        معاينة مباشرة لشكل المقال كما سيظهر للقراء
+                      </span>
+                    </div>
+                    <ArticleBody content={seoBody || bodyRef.current?.value || 'لا يوجد نص للمعاينة بعد.'} />
+                  </div>
+                )}
                 
                 <div className="flex flex-wrap gap-2 pt-2 sm:pt-4">
                   <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="bg-[#bb1919] hover:bg-[#a01515] px-4 sm:px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm">
@@ -836,6 +1056,258 @@ export default function AdminPage() {
 
         </div>
       </div>
+
+      {/* 1. Modal: In-Text Image Inserter */}
+      {showImageModal && (
+        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4" dir="rtl">
+          <div className="bg-white rounded-sm shadow-2xl max-w-lg w-full p-6 border border-gray-200">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span>📷</span>
+                <span>إدراج صورة داخل المقال (بين الفقرات)</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImageModal(false);
+                  setInlineImageFile(null);
+                  setInlineImageUrl('');
+                  setInlineImageCaption('');
+                }}
+                className="text-gray-400 hover:text-gray-700 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* File Upload */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  1. اختيار صورة من جهازك
+                </label>
+                <input
+                  ref={inlineFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setInlineImageFile(f);
+                    }
+                  }}
+                />
+                <div
+                  onClick={() => inlineFileInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-300 hover:border-[#bb1919] p-4 text-center cursor-pointer rounded bg-gray-50 transition"
+                >
+                  {inlineImageFile ? (
+                    <div className="text-xs font-bold text-green-700 flex items-center justify-center gap-2">
+                      <span>✓ تم اختيار: {inlineImageFile.name}</span>
+                      <span className="text-[10px] text-gray-500">({(inlineImageFile.size / 1024).toFixed(0)} KB)</span>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-600">
+                      <span className="text-base block mb-1">📁</span>
+                      <span>انقر لاختيار ملف صورة من جهازك</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-[1px] bg-gray-200 flex-1"></div>
+                <span className="text-xs text-gray-400 font-bold">أو</span>
+                <div className="h-[1px] bg-gray-200 flex-1"></div>
+              </div>
+
+              {/* URL Input */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  2. أو رابط الصورة المباشر (Image URL)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/photo.jpg"
+                  value={inlineImageUrl}
+                  onChange={(e) => setInlineImageUrl(e.target.value)}
+                  dir="ltr"
+                  className="w-full border border-gray-300 px-3 py-2 text-xs outline-none focus:border-[#bb1919] rounded"
+                />
+              </div>
+
+              {/* Caption Input */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  3. تعليق الصورة / المصدر (اختياري)
+                </label>
+                <input
+                  type="text"
+                  placeholder="مثال: تصوير رويترز - جانب من المؤتمر الصحفي"
+                  value={inlineImageCaption}
+                  onChange={(e) => setInlineImageCaption(e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 text-xs outline-none focus:border-[#bb1919] rounded"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImageModal(false);
+                  setInlineImageFile(null);
+                  setInlineImageUrl('');
+                  setInlineImageCaption('');
+                }}
+                className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                disabled={isUploadingInline || (!inlineImageFile && !inlineImageUrl.trim())}
+                onClick={handleInsertInlineImage}
+                className="bg-[#bb1919] hover:bg-[#901414] text-white px-5 py-2 rounded text-xs font-bold transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isUploadingInline ? (
+                  <>
+                    <span className="animate-spin text-sm">⏳</span>
+                    <span>جاري الرفع والإدراج...</span>
+                  </>
+                ) : (
+                  <span>إدراج في المقال</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Modal: Multi-Image Gallery Inserter */}
+      {showGalleryModal && (
+        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4" dir="rtl">
+          <div className="bg-white rounded-sm shadow-2xl max-w-2xl w-full p-6 border border-gray-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span>🖼️</span>
+                <span>إدراج معرض صور متعددة (Photo Gallery Grid)</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGalleryModal(false);
+                  setGalleryItems([]);
+                }}
+                className="text-gray-400 hover:text-gray-700 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 mb-4">
+              اختر عدة صور معاً من جهازك لإدراجها كمعرض صور متناسق (Grid) داخل سياق المقال.
+            </p>
+
+            <input
+              ref={galleryFileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  const newItems = Array.from(files).map((f) => ({
+                    file: f,
+                    url: URL.createObjectURL(f),
+                    caption: ''
+                  }));
+                  setGalleryItems((prev) => [...prev, ...newItems]);
+                }
+              }}
+            />
+
+            <div className="space-y-4">
+              <button
+                type="button"
+                onClick={() => galleryFileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-gray-300 hover:border-[#bb1919] p-4 text-center cursor-pointer rounded bg-gray-50 transition"
+              >
+                <span className="text-base block mb-1">➕</span>
+                <span className="text-xs font-bold text-gray-700">انقر لاختيار عدة صور من جهازك</span>
+              </button>
+
+              {galleryItems.length > 0 && (
+                <div className="space-y-3">
+                  <div className="text-xs font-bold text-gray-700">
+                    الصور المختارة ({galleryItems.length}):
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {galleryItems.map((item, idx) => (
+                      <div key={idx} className="border border-gray-200 p-2 rounded bg-gray-50 relative flex gap-2">
+                        <img src={item.url} alt="Gallery item" className="w-16 h-16 object-cover rounded shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            placeholder="تعليق الصورة (اختياري)..."
+                            value={item.caption}
+                            onChange={(e) => {
+                              const updated = [...galleryItems];
+                              updated[idx].caption = e.target.value;
+                              setGalleryItems(updated);
+                            }}
+                            className="w-full border border-gray-300 bg-white px-2 py-1 text-xs rounded outline-none focus:border-[#bb1919]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGalleryItems(galleryItems.filter((_, i) => i !== idx));
+                            }}
+                            className="text-[10px] text-red-600 hover:underline mt-1 font-bold block"
+                          >
+                            إزالة الصورة
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGalleryModal(false);
+                  setGalleryItems([]);
+                }}
+                className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                disabled={isUploadingGallery || galleryItems.length === 0}
+                onClick={handleInsertGallery}
+                className="bg-[#bb1919] hover:bg-[#901414] text-white px-5 py-2 rounded text-xs font-bold transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isUploadingGallery ? (
+                  <>
+                    <span className="animate-spin text-sm">⏳</span>
+                    <span>جاري رفع المعرض...</span>
+                  </>
+                ) : (
+                  <span>إدراج المعرض ({galleryItems.length}) في المقال</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

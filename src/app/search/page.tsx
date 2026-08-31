@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui';
 import Footer from '@/components/footer';
-import { listNews, translateCategory } from '@/lib/news-store';
+import { listNews, translateCategory, getArticleExcerpt } from '@/lib/news-store';
 
 export const metadata: Metadata = {
   title: 'Search | Sauthalhind',
@@ -82,7 +82,7 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
                 <h2 className="font-bold text-lg leading-snug text-gray-900 line-clamp-3 group-hover:text-[#bb1919] transition">
                   {item.title}
                 </h2>
-                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.body || 'لا يوجد تفاصيل.'}</p>
+                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{getArticleExcerpt(item.body, 120) || 'لا يوجد تفاصيل.'}</p>
               </div>
               <div className="mt-4 pt-2 border-t border-gray-100 text-[10px] text-gray-400">
                 {new Date(item.created_at || Date.now()).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
