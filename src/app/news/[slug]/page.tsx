@@ -197,14 +197,12 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 </div>
 
                 {article.cover_image && (
-                  <div className="mb-8 relative w-full aspect-video max-h-[500px] overflow-hidden rounded-sm">
-                    <Image 
+                  <div className="mb-8 w-full overflow-hidden rounded-sm bg-gray-100 border border-gray-200 shadow-sm">
+                    <img 
                       src={article.cover_image.startsWith('http') ? article.cover_image : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`} 
                       alt={article.title} 
-                      fill 
-                      priority
-                      className="object-cover" 
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="w-full max-h-[550px] object-cover object-center" 
+                      loading="eager"
                     />
                   </div>
                 )}

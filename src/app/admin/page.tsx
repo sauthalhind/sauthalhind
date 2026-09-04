@@ -99,6 +99,7 @@ export default function AdminPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageName, setCoverImageName] = useState<string>('');
+  const [coverImageUrlInput, setCoverImageUrlInput] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'loading' | 'supabase' | 'fallback' | 'error'>('loading');
   const [debugInfo, setDebugInfo] = useState<{ supabaseConfigured: boolean; newsSource: string; newsCount: number; newsError: string | null; timestamp: string } | null>(null);
@@ -230,6 +231,7 @@ export default function AdminPage() {
     if (bodyRef.current) bodyRef.current.value = item.body ?? '';
     setCoverImage(item.cover_image ?? null);
     setCoverImageName('');
+    setCoverImageUrlInput(item.cover_image ?? '');
     setSeoTitle(item.title);
     setSeoSlug(item.slug);
     setSeoBody(item.body ?? '');
@@ -244,11 +246,12 @@ export default function AdminPage() {
     setEditingId(null);
     if (titleRef.current) titleRef.current.value = '';
     if (slugRef.current) slugRef.current.value = '';
-    if (authorRef.current) authorRef.current.value = 'Editorial';
+    if (authorRef.current) authorRef.current.value = 'قسم التحرير';
     if (categoryRef.current) categoryRef.current.value = 'Breaking News';
     if (bodyRef.current) bodyRef.current.value = '';
     setCoverImage(null);
     setCoverImageName('');
+    setCoverImageUrlInput('');
     setSeoTitle('');
     setSeoSlug('');
     setSeoBody('');
@@ -776,150 +779,198 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_300px]">
-              {/* Left/Main Editor Col */}
-              <div className="space-y-3 sm:space-y-4">
+            {/* Step-by-Step Modern Intuitive News Editor */}
+            <div className="space-y-6">
+              {/* 1. News Title (عنوان الخبر) */}
+              <div className="bg-white p-4 border border-gray-200 rounded-sm shadow-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#bb1919] text-white flex items-center justify-center text-xs">1</span>
+                    <span>عنوان الخبر الرئيسي (News Headline)</span>
+                  </label>
+                  <span className="text-xs text-gray-400">مطلوب *</span>
+                </div>
                 <input 
                   ref={titleRef} 
-                  onChange={(e) => setSeoTitle(e.target.value)}
+                  onChange={(e) => {
+                    setSeoTitle(e.target.value);
+                    if (!editingId && slugRef.current && !slugRef.current.value) {
+                      const autoSlug = e.target.value
+                        .trim()
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\u0600-\u06ff]+/gi, '-')
+                        .replace(/^-+|-+$/g, '');
+                      setSeoSlug(autoSlug);
+                    }
+                  }}
                   defaultValue={seoTitle}
-                  className="w-full border border-gray-300 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-lg sm:text-xl font-bold transition-shadow" 
-                  placeholder="عنوان الخبر..." 
+                  className="w-full border border-gray-300 bg-white px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-2 focus:ring-[#bb1919]/20 text-lg sm:text-xl font-bold rounded-sm transition" 
+                  placeholder="اكتب عنوان الخبر بوضوح هنا... (Enter news headline)" 
+                />
+              </div>
+
+              {/* 2. Cover Photo Section (صورة الواجهة الرئيسية) */}
+              <div className="bg-white p-4 border border-gray-200 rounded-sm shadow-xs">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#bb1919] text-white flex items-center justify-center text-xs">2</span>
+                    <span>صورة الغلاف الرئيسية (Main Cover Photo)</span>
+                  </label>
+                  {coverImage ? (
+                    <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-0.5 rounded font-bold flex items-center gap-1">
+                      <span>✓</span>
+                      <span>تم تحديد الصورة بنجاح</span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded">
+                      تظهر كواجهة رئيسية للخبر
+                    </span>
+                  )}
+                </div>
+
+                <input
+                  ref={coverPhotoRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    setIsUploading(true);
+                    setCoverImageName(file.name);
+                    flashStatus('جاري رفع صورة الغلاف...');
+                    
+                    const formData = new FormData();
+                    formData.append('bucket', 'news-media');
+                    formData.append('files', file);
+
+                    try {
+                      const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
+                      if (!response.ok || !result.ok) {
+                        flashStatus(result.error ?? 'فشل رفع صورة الغلاف');
+                      } else {
+                        const url = result.uploaded?.[0]?.url;
+                        if (url) {
+                          setCoverImage(url);
+                          setCoverImageUrlInput(url);
+                          flashStatus('تم رفع صورة الغلاف بنجاح');
+                        }
+                      }
+                    } catch {
+                      flashStatus('خطأ في الرفع');
+                    } finally {
+                      setIsUploading(false);
+                    }
+                  }}
                 />
 
-                {/* Rich In-Text Formatting & Media Insertion Toolbar */}
-                <div className="border border-gray-200 bg-[#f9f9f9] p-2 flex flex-wrap items-center justify-between gap-2 rounded-t-sm">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setShowImageModal(true)}
-                      className="inline-flex items-center gap-1.5 bg-white hover:bg-[#ffebeb] text-gray-800 hover:text-[#bb1919] border border-gray-300 hover:border-[#bb1919] px-3 py-1.5 rounded text-xs font-bold transition shadow-xs"
-                      title="إدراج صورة بين الفقرات مع تعليق"
-                    >
-                      <span className="text-sm">📷</span>
-                      <span>صورة بين الفقرات</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowGalleryModal(true)}
-                      className="inline-flex items-center gap-1.5 bg-white hover:bg-[#ffebeb] text-gray-800 hover:text-[#bb1919] border border-gray-300 hover:border-[#bb1919] px-3 py-1.5 rounded text-xs font-bold transition shadow-xs"
-                      title="إدراج معرض صور متعددة"
-                    >
-                      <span className="text-sm">🖼️</span>
-                      <span>معرض صور متعددة</span>
-                    </button>
-
-                    <div className="h-5 w-[1px] bg-gray-300 mx-1 hidden sm:block"></div>
-
-                    <button
-                      type="button"
-                      onClick={() => insertAtCursor('\n\n## عنوان فرعي هنا\n\n')}
-                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
-                      title="إدراج عنوان فرعي"
-                    >
-                      📌 عنوان فرعي
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => insertAtCursor('\n\n> نص الاقتباس المميز هنا...\n\n')}
-                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
-                      title="إدراج اقتباس"
-                    >
-                      💬 اقتباس
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => insertAtCursor('\n\n---\n\n')}
-                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
-                      title="إدراج خط فاصل"
-                    >
-                      ➖ فاصل
-                    </button>
-                  </div>
-
-                  {/* Edit / Live Preview Switcher */}
-                  <div className="flex items-center bg-gray-200 p-0.5 rounded text-xs font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setEditorMode('edit')}
-                      className={`px-3 py-1 rounded transition ${editorMode === 'edit' ? 'bg-[#bb1919] text-white shadow-xs' : 'text-gray-600 hover:text-black'}`}
-                    >
-                      ✏️ تحرير
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditorMode('preview')}
-                      className={`px-3 py-1 rounded transition ${editorMode === 'preview' ? 'bg-[#bb1919] text-white shadow-xs' : 'text-gray-600 hover:text-black'}`}
-                    >
-                      👁️ معاينة مباشرة
-                    </button>
-                  </div>
-                </div>
-                
-                {editorMode === 'edit' ? (
-                  <div>
-                    <textarea
-                      ref={bodyRef}
-                      onChange={(e) => setSeoBody(e.target.value)}
-                      defaultValue={seoBody}
-                      className="min-h-[260px] sm:min-h-[350px] w-full border border-gray-300 border-t-0 bg-white px-3 sm:px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-sm sm:text-base leading-7 sm:leading-8 transition-shadow font-sans"
-                      placeholder="نص المقال يكتب هنا... يمكنك استخدام زر '📷 صورة بين الفقرات' أعلاه لوضع صور متعددة بتعليقاتها في أي مكان."
-                    />
-                    <div className="mt-1 flex items-center justify-between text-xs text-gray-500 px-1">
-                      <span>💡 اضغط على زر 📷 صورة بين الفقرات لإدراج صور بتعليقاتها أينما تشاء داخل المقال.</span>
-                      <span>{seoBody ? seoBody.length : 0} حرف</span>
+                {coverImage ? (
+                  <div className="space-y-3">
+                    <div className="relative w-full max-h-[320px] overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+                      <img src={coverImage} alt="Cover preview" className="w-full max-h-[320px] object-cover" />
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <div className="text-xs text-gray-500 truncate max-w-md" dir="ltr">
+                        {coverImage}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => coverPhotoRef.current?.click()}
+                          disabled={isUploading}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-1.5"
+                        >
+                          <span>🔄</span>
+                          <span>تغيير الصورة</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoverImage(null);
+                            setCoverImageName('');
+                            setCoverImageUrlInput('');
+                            flashStatus('تمت إزالة صورة الغلاف');
+                          }}
+                          className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-1"
+                        >
+                          <span>🗑️</span>
+                          <span>إزالة الصورة</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="border border-gray-300 border-t-0 bg-white p-4 sm:p-6 min-h-[350px]">
-                    <div className="border-b border-gray-200 pb-3 mb-4">
-                      <span className="text-xs font-bold text-[#bb1919] bg-[#ffebeb] px-2 py-0.5 rounded">
-                        معاينة مباشرة لشكل المقال كما سيظهر للقراء
+                  <div className="grid sm:grid-cols-2 gap-3 items-center">
+                    <div 
+                      onClick={() => coverPhotoRef.current?.click()}
+                      className={`border-2 border-dashed border-gray-300 hover:border-[#bb1919] p-6 text-center cursor-pointer rounded bg-gray-50/50 hover:bg-gray-50 transition flex flex-col items-center justify-center min-h-[140px] ${isUploading ? 'opacity-50' : ''}`}
+                    >
+                      <span className="text-3xl mb-1">📷</span>
+                      <span className="text-sm font-bold text-gray-800 mb-0.5">
+                        {isUploading ? 'جاري رفع الصورة...' : 'رفع صورة من جهازك (Upload)'}
                       </span>
+                      <span className="text-xs text-gray-500">انقر هنا لاختيار ملف صورة الغلاف</span>
                     </div>
-                    <ArticleBody content={seoBody || bodyRef.current?.value || 'لا يوجد نص للمعاينة بعد.'} />
+
+                    <div className="border border-gray-200 p-4 rounded bg-gray-50/50 flex flex-col justify-center min-h-[140px] space-y-2">
+                      <label className="text-xs font-bold text-gray-700">
+                        أو ضع رابط صورة مباشر (Image URL):
+                      </label>
+                      <input 
+                        type="url"
+                        placeholder="https://images.unsplash.com/... أو أي رابط صورة"
+                        value={coverImageUrlInput}
+                        onChange={(e) => setCoverImageUrlInput(e.target.value)}
+                        dir="ltr"
+                        className="w-full border border-gray-300 bg-white px-3 py-2 text-xs rounded outline-none focus:border-[#bb1919]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (coverImageUrlInput.trim()) {
+                            setCoverImage(coverImageUrlInput.trim());
+                            flashStatus('تم تعيين صورة الغلاف بنجاح');
+                          }
+                        }}
+                        className="bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold transition"
+                      >
+                        تطبيق الرابط (Apply URL)
+                      </button>
+                    </div>
                   </div>
                 )}
-                
-                <div className="flex flex-wrap gap-2 pt-2 sm:pt-4">
-                  <button type="button" disabled={isSaving} onClick={() => saveNews('published')} className="bg-[#bb1919] hover:bg-[#a01515] px-4 sm:px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm">
-                    نشر المقال فوراً
-                  </button>
-                  <button type="button" disabled={isSaving} onClick={() => saveNews('draft')} className="bg-gray-800 hover:bg-black px-4 sm:px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm">
-                    حفظ مسودة
-                  </button>
-                </div>
               </div>
 
-              {/* Right/Meta Col */}
-              <div className="space-y-4 sm:space-y-5 bg-gray-50 p-3 sm:p-4 border border-gray-100">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">الرابط الفرعي (Slug)</label>
-                  <input 
-                    ref={slugRef} 
-                    onChange={(e) => setSeoSlug(e.target.value)}
-                    defaultValue={seoSlug}
-                    className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]" 
-                  />
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <label className="block text-xs font-bold text-gray-600 mb-1">التصنيف</label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <select ref={categoryRef} className="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]">
-                      <option value="">اختر القسم...</option>
-                      {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                    <div className="flex gap-1 sm:w-1/3">
+              {/* 3. Publishing Meta (التصنيف، الكاتب، الرابط) */}
+              <div className="bg-white p-4 border border-gray-200 rounded-sm shadow-xs">
+                <label className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3 border-b border-gray-100 pb-2">
+                  <span className="w-6 h-6 rounded-full bg-[#bb1919] text-white flex items-center justify-center text-xs">3</span>
+                  <span>بيانات النشر والتصنيف (Publishing Details)</span>
+                </label>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Category */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      القسم / التصنيف (Category) *
+                    </label>
+                    <div className="flex gap-1.5">
+                      <select ref={categoryRef} className="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm rounded outline-none focus:border-[#bb1919]">
+                        <option value="">اختر القسم...</option>
+                        {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                    </div>
+                    <div className="mt-1.5 flex gap-1">
                       <input 
                         type="text" 
-                        placeholder="قسم جديد (New)" 
+                        placeholder="+ قسم جديد..." 
                         value={newCategory} 
                         onChange={(e) => setNewCategory(e.target.value)} 
-                        className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]"
+                        className="flex-1 border border-gray-200 bg-gray-50 px-2 py-1 text-xs rounded outline-none focus:border-[#bb1919]"
                       />
                       <button 
                         type="button"
@@ -932,81 +983,192 @@ export default function AdminPage() {
                             setNewCategory('');
                           }
                         }}
-                        className="bg-gray-800 text-white px-3 py-2 text-xs font-bold whitespace-nowrap hover:bg-black transition-colors"
+                        className="bg-gray-700 text-white px-2.5 py-1 text-xs font-bold rounded hover:bg-black transition"
                       >
                         إضافة
                       </button>
                     </div>
                   </div>
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">صورة الغلاف</label>
-                  <input
-                    ref={coverPhotoRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (event) => {
-                      const file = event.target.files?.[0];
-                      if (!file) return;
-                      setIsUploading(true);
-                      setCoverImageName(file.name);
-                      flashStatus('جاري رفع الصورة...');
-                      
-                      const formData = new FormData();
-                      formData.append('bucket', 'news-media');
-                      formData.append('files', file);
 
-                      try {
-                        const response = await fetch('/api/upload', {
-                          method: 'POST',
-                          body: formData
-                        });
-                        const result = (await response.json()) as { ok: boolean; uploaded?: Array<{ url?: string }>; error?: string };
-                        if (!response.ok || !result.ok) {
-                          flashStatus(result.error ?? 'Upload failed');
-                        } else {
-                          const url = result.uploaded?.[0]?.url;
-                          if (url) {
-                            setCoverImage(url);
-                            flashStatus('Image uploaded successfully');
-                          }
-                        }
-                      } catch(e) {
-                        flashStatus('Upload error');
-                      } finally {
-                        setIsUploading(false);
-                      }
-                    }}
-                  />
+                  {/* Author */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      الكاتب أو المصدر (Author / Source)
+                    </label>
+                    <input 
+                      ref={authorRef} 
+                      defaultValue="قسم التحرير"
+                      className="w-full border border-gray-300 bg-white px-3 py-2 text-sm rounded outline-none focus:border-[#bb1919]" 
+                    />
+                  </div>
+
+                  {/* Slug */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      الرابط الفرعي (URL Slug)
+                    </label>
+                    <input 
+                      ref={slugRef} 
+                      onChange={(e) => setSeoSlug(e.target.value)}
+                      defaultValue={seoSlug}
+                      placeholder="يتولد تلقائياً من العنوان"
+                      className="w-full border border-gray-300 bg-white px-3 py-2 text-sm rounded outline-none focus:border-[#bb1919]" 
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Article Content & In-Text Media Toolbar */}
+              <div className="bg-white p-4 border border-gray-200 rounded-sm shadow-xs">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#bb1919] text-white flex items-center justify-center text-xs">4</span>
+                    <span>محتوى المقال والوسائط (Article Body & Photos)</span>
+                  </label>
                   
-                  <div 
-                    onClick={() => coverPhotoRef.current?.click()}
-                    className={`border-2 border-dashed border-gray-300 bg-white p-4 text-center cursor-pointer hover:border-[#bb1919] transition-colors ${isUploading ? 'opacity-50' : ''}`}
-                  >
-                    {coverImage ? (
-                      <div className="relative">
-                        <img src={coverImage} alt="Cover preview" className="h-32 w-full object-cover mb-2" />
-                        <span className="text-[10px] bg-black/60 text-white px-2 py-1 absolute bottom-2 right-2">تغيير الصورة</span>
-                      </div>
-                    ) : (
-                      <div className="py-6">
-                        <div className="text-xl mb-1 text-gray-400">📷</div>
-                        <div className="text-xs font-bold text-gray-600">{isUploading ? 'جاري الرفع...' : 'اختر صورة من جهازك'}</div>
-                      </div>
-                    )}
+                  {/* Edit / Live Preview Switcher */}
+                  <div className="flex items-center bg-gray-100 p-0.5 rounded text-xs font-bold border border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => setEditorMode('edit')}
+                      className={`px-3 py-1.5 rounded transition flex items-center gap-1.5 ${editorMode === 'edit' ? 'bg-[#bb1919] text-white shadow-xs' : 'text-gray-600 hover:text-black'}`}
+                    >
+                      <span>✏️</span>
+                      <span>كتابة المقال</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorMode('preview')}
+                      className={`px-3 py-1.5 rounded transition flex items-center gap-1.5 ${editorMode === 'preview' ? 'bg-[#bb1919] text-white shadow-xs' : 'text-gray-600 hover:text-black'}`}
+                    >
+                      <span>👁️</span>
+                      <span>معاينة حية</span>
+                    </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">الكاتب</label>
-                  <input 
-                    ref={authorRef} 
-                    defaultValue="قسم التحرير"
-                    className="w-full border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#bb1919]" 
-                  />
+                {/* Rich In-Text Formatting & Media Insertion Toolbar */}
+                <div className="border border-gray-200 bg-[#fbfbfb] p-2.5 flex flex-wrap items-center justify-between gap-2 rounded-t">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowImageModal(true)}
+                      className="inline-flex items-center gap-1.5 bg-[#bb1919] hover:bg-[#901414] text-white px-3.5 py-1.5 rounded text-xs font-bold transition shadow-xs"
+                      title="إدراج صورة بين الفقرات مع تعليق"
+                    >
+                      <span className="text-base">📷</span>
+                      <span>صورة بين الفقرات (Insert Photo)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowGalleryModal(true)}
+                      className="inline-flex items-center gap-1.5 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 px-3 py-1.5 rounded text-xs font-bold transition shadow-xs"
+                      title="إدراج معرض صور متعددة"
+                    >
+                      <span className="text-base">🖼️</span>
+                      <span>معرض صور (Gallery)</span>
+                    </button>
+
+                    <div className="h-5 w-[1px] bg-gray-300 mx-1 hidden sm:block"></div>
+
+                    <button
+                      type="button"
+                      onClick={() => insertAtCursor('\n\n## عنوان فرعي هنا\n\n')}
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
+                    >
+                      📌 عنوان فرعي
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => insertAtCursor('\n\n> نص الاقتباس المميز هنا...\n\n')}
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
+                    >
+                      💬 اقتباس
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => insertAtCursor('\n\n---\n\n')}
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-bold transition"
+                    >
+                      ➖ فاصل
+                    </button>
+                  </div>
                 </div>
+
+                {/* Helpful Instruction Tip */}
+                <div className="bg-[#fff9e6] border-x border-b border-[#ffe299] px-3 py-2 text-xs text-[#8a6300] flex items-center gap-2">
+                  <span>💡</span>
+                  <span>
+                    <strong>طريقة إدراج الصور:</strong> ضع المؤشر في المكان الذي تريده بين أي فقرتين، ثم اضغط على زر <strong>"📷 صورة بين الفقرات"</strong> أعلاه.
+                  </span>
+                </div>
+                
+                {editorMode === 'edit' ? (
+                  <div>
+                    <textarea
+                      ref={bodyRef}
+                      onChange={(e) => setSeoBody(e.target.value)}
+                      defaultValue={seoBody}
+                      className="min-h-[280px] sm:min-h-[380px] w-full border border-gray-300 border-t-0 bg-white px-4 py-3 outline-none focus:border-[#bb1919] focus:ring-1 focus:ring-[#bb1919] text-base leading-8 transition-shadow font-sans rounded-b"
+                      placeholder="اكتب نص المقال هنا... استخدم الأزرار أعلاه لوضع صور متعددة بين الفقرات أو إضافة معرض صور وعناوين فرعية."
+                    />
+                    <div className="mt-1 flex items-center justify-between text-xs text-gray-500 px-1">
+                      <span>عدد الحروف: {seoBody ? seoBody.length : 0}</span>
+                      <span>يدعم المقال نصوصاً غير محدودة وصوراً متعددة</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border border-gray-300 border-t-0 bg-white p-4 sm:p-6 min-h-[380px] rounded-b">
+                    <div className="border-b border-gray-200 pb-3 mb-4 flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#bb1919] bg-[#ffebeb] px-2.5 py-1 rounded">
+                        معاينة مباشرة لشكل المقال والصور كما سيظهر للقراء
+                      </span>
+                    </div>
+                    {coverImage && (
+                      <div className="mb-6 rounded overflow-hidden border border-gray-200">
+                        <img src={coverImage} alt="Cover preview" className="w-full max-h-[350px] object-cover" />
+                        <div className="bg-gray-100 px-3 py-1 text-xs text-gray-600">صورة الغلاف الرئيسية</div>
+                      </div>
+                    )}
+                    <ArticleBody content={seoBody || bodyRef.current?.value || 'لا يوجد نص للمعاينة بعد.'} />
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Bottom Publish Action Bar */}
+              <div className="bg-white p-4 border border-gray-200 rounded-sm shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button 
+                    type="button" 
+                    disabled={isSaving} 
+                    onClick={() => saveNews('published')} 
+                    className="bg-[#bb1919] hover:bg-[#a01515] px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm rounded shadow-sm flex items-center gap-2"
+                  >
+                    <span>🚀</span>
+                    <span>نشر المقال فوراً (Publish Now)</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    disabled={isSaving} 
+                    onClick={() => saveNews('draft')} 
+                    className="bg-gray-800 hover:bg-black px-5 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm rounded flex items-center gap-2"
+                  >
+                    <span>💾</span>
+                    <span>حفظ كمسودة (Save Draft)</span>
+                  </button>
+                </div>
+
+                <button 
+                  type="button" 
+                  onClick={resetEditor} 
+                  className="text-xs px-4 py-2.5 bg-gray-100 hover:bg-gray-200 font-bold text-gray-700 transition rounded"
+                >
+                  {editingId ? 'إلغاء التعديل' : 'مقال جديد (Clear)'}
+                </button>
               </div>
             </div>
           </section>
@@ -1140,7 +1302,7 @@ export default function AdminPage() {
               {/* Caption Input */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  3. تعليق الصورة / المصدر (اختياري)
+                  3. تعليق الصورة / المصدر (Image Caption - اختياري)
                 </label>
                 <input
                   type="text"
@@ -1150,6 +1312,30 @@ export default function AdminPage() {
                   className="w-full border border-gray-300 px-3 py-2 text-xs outline-none focus:border-[#bb1919] rounded"
                 />
               </div>
+
+              {/* Live Preview inside Modal */}
+              {(inlineImageFile || inlineImageUrl.trim()) && (
+                <div className="border border-gray-200 rounded p-2.5 bg-gray-50 flex items-center gap-3">
+                  <div className="w-20 h-16 rounded overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
+                    <img
+                      src={inlineImageFile ? URL.createObjectURL(inlineImageFile) : inlineImageUrl.trim()}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 text-xs text-gray-700">
+                    <span className="font-bold block text-green-700">✓ معاينة الصورة</span>
+                    <span className="truncate block text-[11px] text-gray-500" dir="ltr">
+                      {inlineImageFile ? inlineImageFile.name : inlineImageUrl.trim()}
+                    </span>
+                    {inlineImageCaption && (
+                      <span className="text-[11px] text-gray-600 block mt-0.5 truncate italic">
+                        📷 {inlineImageCaption}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
