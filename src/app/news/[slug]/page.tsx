@@ -6,6 +6,7 @@ import { ShareBar } from '@/components/share-bar';
 import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
 import { getNewsBySlug, listNews, translateCategory } from '@/lib/news-store';
+import ClientArticleFallback from '@/components/client-article-fallback';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -72,7 +73,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
   const result = await getNewsBySlug(slug);
 
   if (!result.ok || !result.item) {
-    notFound();
+    return <ClientArticleFallback slug={slug} />;
   }
 
   const article = result.item;

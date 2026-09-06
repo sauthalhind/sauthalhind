@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui';
@@ -15,7 +18,26 @@ type NewsItem = {
   author?: string;
 };
 
-export default function HomePageClient({ news }: { news: NewsItem[] }) {
+export default function HomePageClient({ news: initialNews }: { news: NewsItem[] }) {
+  const [news, setNews] = useState<NewsItem[]>(initialNews);
+
+  useEffect(() => {
+    try {
+      const local = JSON.parse(window.localStorage.getItem('sawt-al-hind-admin-news') || '[]') as NewsItem[];
+      if (Array.isArray(local) && local.length > 0) {
+        const publishedLocal = local.filter((item) => item.status === 'published');
+        const map = new Map<string, NewsItem>();
+        initialNews.forEach((item) => map.set(item.id, item));
+        publishedLocal.forEach((item) => map.set(item.id, item));
+        const merged = Array.from(map.values());
+        merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setNews(merged);
+      }
+    } catch {
+      // ignore
+    }
+  }, [initialNews]);
+
   const heroStory = news[0];
   const latestNews = news.slice(1, 5);
   // Extract unique categories, max 6
