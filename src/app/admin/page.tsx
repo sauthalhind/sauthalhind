@@ -377,6 +377,73 @@ export default function AdminPage() {
     flashStatus(`تم تصدير ${sourceItems.length} خبر بنجاح`);
   };
 
+  const parseCSV = (csvText: string) => {
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      const nextChar = csvText[i + 1];
+
+      if (inQuotes) {
+        if (char === '"' && nextChar === '"') {
+          currentField += '"';
+          i++;
+        } else if (char === '"') {
+          inQuotes = false;
+        } else {
+          currentField += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === ',') {
+          currentRow.push(currentField);
+          currentField = '';
+        } else if (char === '\r') {
+          // ignore CR
+        } else if (char === '\n') {
+          currentRow.push(currentField);
+          currentField = '';
+          if (currentRow.length > 0 && currentRow.some((f) => f.trim() !== '')) {
+            rows.push(currentRow);
+          }
+          currentRow = [];
+        } else {
+          currentField += char;
+        }
+      }
+    }
+    if (currentField !== '' || currentRow.length > 0) {
+      currentRow.push(currentField);
+      if (currentRow.some((f) => f.trim() !== '')) {
+        rows.push(currentRow);
+      }
+    }
+
+    if (rows.length < 2) return [];
+    const headers = rows[0].map((h) => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
+    return rows.slice(1).map((row) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, idx) => {
+        obj[h] = row[idx] ?? '';
+      });
+      return {
+        id: obj.id || crypto.randomUUID(),
+        title: obj.title || 'Untitled story',
+        slug: obj.slug || `story-${Date.now().toString(36)}`,
+        author: obj.author || 'قسم التحرير',
+        category: obj.category || 'Breaking News',
+        body: obj.body || '',
+        cover_image: obj.cover_image && obj.cover_image !== 'null' ? obj.cover_image : null,
+        status: (obj.status as 'published' | 'draft') || 'published',
+        created_at: obj.created_at || new Date().toISOString()
+      };
+    });
+  };
+
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -384,24 +451,36 @@ export default function AdminPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const text = event.target?.result as string;
-        const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed)) {
-          flashStatus('ملف غير صالح (Invalid JSON format)');
+        const text = (event.target?.result as string) || '';
+        let parsed: any[] = [];
+
+        if (file.name.toLowerCase().endsWith('.csv') || text.includes(',') && (text.toLowerCase().includes('title') || text.toLowerCase().includes('slug'))) {
+          parsed = parseCSV(text);
+        } else {
+          parsed = JSON.parse(text);
+        }
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          flashStatus('ملف فارغ أو تنسيق غير صالح');
           return;
         }
+
         const existing = readLocalNews();
         const map = new Map();
         existing.forEach((item) => map.set(item.id, item));
         parsed.forEach((item) => {
           if (item && item.title) {
-            map.set(item.id || crypto.randomUUID(), item);
+            map.set(item.id || crypto.randomUUID(), {
+              ...item,
+              id: item.id || crypto.randomUUID(),
+              status: item.status || 'published'
+            });
           }
         });
         const combined = Array.from(map.values());
         writeLocalNews(combined);
         broadcastNewsUpdate();
-        flashStatus(`تم استيراد ${parsed.length} خبر بنجاح`);
+        flashStatus(`تم استيراد ${parsed.length} خبر بنجاح!`);
       } catch {
         flashStatus('خطأ في قراءة ملف النسخة الاحتياطية');
       }
@@ -887,7 +966,7 @@ export default function AdminPage() {
                 <input
                   ref={importFileRef}
                   type="file"
-                  accept=".json"
+                  accept=".json,.csv"
                   className="hidden"
                   onChange={handleImportFile}
                 />
@@ -904,10 +983,10 @@ export default function AdminPage() {
                   type="button"
                   onClick={() => importFileRef.current?.click()}
                   className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-3.5 py-2 rounded font-bold flex items-center gap-1.5 transition border border-gray-300"
-                  title="استعادة الأخبار من ملف JSON"
+                  title="استعادة الأخبار من ملف CSV أو JSON"
                 >
                   <span>📤</span>
-                  <span>استيراد (Import JSON)</span>
+                  <span>استيراد ملف (Import CSV / JSON)</span>
                 </button>
               </div>
             </div>
