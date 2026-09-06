@@ -73,12 +73,15 @@ export const revalidate = 60; // ISR revalidation
 export default async function NewsArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const result = await getNewsBySlug(slug);
+  const serverArticle = result.ok ? result.item : null;
 
-  if (!result.ok || !result.item) {
-    return <ArticleFallbackReader slug={slug} />;
+  // If there is no server article, or if the server matched a dummy seed article, delegate to ArticleFallbackReader
+  // so the client's local user-created article in localStorage always takes priority over seed articles!
+  if (!serverArticle || serverArticle.id.startsWith('seed-')) {
+    return <ArticleFallbackReader slug={slug} initialArticle={serverArticle} />;
   }
 
-  const article = result.item;
+  const article = serverArticle;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const url = `${baseUrl}/news/${article.slug}`;
   const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();

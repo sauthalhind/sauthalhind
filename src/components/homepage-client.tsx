@@ -82,15 +82,24 @@ export default function HomePageClient({ news: initialNews = [] }: { news?: News
 
     // Add API/Server news first
     apiNews.forEach((item) => {
-      map.set(item.slug || item.id, item);
+      const key = item.id || item.slug;
+      if (key) map.set(key, item);
     });
 
     // Then overlay/prepend local user-created news from admin
     localNews.forEach((item) => {
-      map.set(item.slug || item.id, item);
+      const key = item.id || item.slug;
+      if (key) map.set(key, item);
     });
 
-    const list = Array.from(map.values());
+    let list = Array.from(map.values());
+
+    // If real user articles exist (not seed-), filter out seed stories so they don't mix with user's real news
+    const userArticles = list.filter((item) => !item.id.startsWith('seed-'));
+    if (userArticles.length > 0) {
+      list = userArticles;
+    }
+
     if (list.length === 0) {
       return SEED_NEWS;
     }
@@ -317,42 +326,44 @@ export default function HomePageClient({ news: initialNews = [] }: { news?: News
             </div>
 
             {/* More News Sidebar Widget */}
-            <div className="bg-white border border-black/5 p-4 sm:p-5 shadow-sm rounded-sm hidden lg:block">
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-900">
-                <span className="text-xl">📰</span>
-                <h2 className="text-base font-bold text-gray-900">المزيد من الأخبار</h2>
-              </div>
-              <div className="space-y-4">
-                {news.slice(1, 6).map((item) => (
-                  <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0 min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
-                      <h3 dir="auto" className="font-bold text-xs sm:text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-3 break-words">
-                        {item.title}
-                      </h3>
-                    </div>
-                    {item.cover_image && (
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
-                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
+            {news.length > 2 && (
+              <div className="bg-white border border-black/5 p-4 sm:p-5 shadow-sm rounded-sm hidden lg:block">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-900">
+                  <span className="text-xl">📰</span>
+                  <h2 className="text-base font-bold text-gray-900">المزيد من الأخبار</h2>
+                </div>
+                <div className="space-y-4">
+                  {news.slice(1, 6).map((item) => (
+                    <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
+                        <h3 dir="auto" className="font-bold text-xs sm:text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-3 break-words">
+                          {item.title}
+                        </h3>
                       </div>
-                    )}
-                  </Link>
-                ))}
+                      {item.cover_image && (
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
+                          <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           
         </div>
 
-        {/* Latest News Grid Below */}
-        {news.length > 0 && (
+        {/* Latest News Grid Below - only show when more than 5 stories exist so top articles are not duplicated */}
+        {news.length > 5 && (
           <section className="mt-10 sm:mt-14 pt-6 sm:pt-8 border-t border-gray-200">
             <div className="flex items-center justify-between mb-4 sm:mb-6 border-r-4 border-gray-900 pr-3">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">أخبار أخرى</h2>
               <Link href="/search" className="text-xs font-bold text-[#bb1919] hover:underline">عرض الكل &larr;</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {news.slice(0, 8).map((item) => (
+              {news.slice(5, 13).map((item) => (
                 <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col min-w-0 rounded-sm">
                   <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
                     {item.cover_image ? (

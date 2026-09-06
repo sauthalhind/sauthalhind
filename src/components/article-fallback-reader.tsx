@@ -23,34 +23,84 @@ type NewsItem = {
 
 const localNewsKey = 'sawt-al-hind-admin-news';
 
-export function ArticleFallbackReader({ slug }: { slug: string }) {
+export function ArticleFallbackReader({ slug, initialArticle }: { slug: string; initialArticle?: NewsItem | null }) {
   const [mounted, setMounted] = useState(false);
-  const [article, setArticle] = useState<NewsItem | null>(null);
+  const [article, setArticle] = useState<NewsItem | null>(initialArticle || null);
 
   useEffect(() => {
     setMounted(true);
+    const cleanSlug = (slug || '').trim().toLowerCase();
+    const cleanDecoded = decodeURIComponent(slug || '').trim().toLowerCase();
+
+    // 1. First priority: Check local storage (user's edited/new articles)
     try {
       const raw = window.localStorage.getItem(localNewsKey);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          const decoded = decodeURIComponent(slug);
-          const found = parsed.find(
-            (item: NewsItem) =>
-              item.slug === slug ||
-              item.slug === decoded ||
-              item.id === slug ||
-              encodeURIComponent(item.slug || '') === slug
-          );
+          const found = parsed.find((item: NewsItem) => {
+            const itemSlug = (item.slug || '').trim().toLowerCase();
+            const itemId = (item.id || '').trim().toLowerCase();
+            return (
+              itemSlug === cleanSlug ||
+              itemSlug === cleanDecoded ||
+              itemId === cleanSlug ||
+              itemId === cleanDecoded ||
+              encodeURIComponent(itemSlug) === cleanSlug ||
+              encodeURIComponent(itemSlug) === cleanDecoded
+            );
+          });
           if (found) {
             setArticle(found);
+            return;
           }
         }
       }
     } catch {
       // ignore
     }
-  }, [slug]);
+
+    // 2. Second priority: Initial non-seed article passed from server
+    if (initialArticle && !initialArticle.id.startsWith('seed-')) {
+      setArticle(initialArticle);
+      return;
+    }
+
+    // 3. Third priority: Try fetching live from API
+    const fetchFromApi = async () => {
+      try {
+        const res = await fetch('/api/news');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok && Array.isArray(json.items)) {
+            const found = json.items.find((item: NewsItem) => {
+              const itemSlug = (item.slug || '').trim().toLowerCase();
+              const itemId = (item.id || '').trim().toLowerCase();
+              return (
+                itemSlug === cleanSlug ||
+                itemSlug === cleanDecoded ||
+                itemId === cleanSlug ||
+                itemId === cleanDecoded
+              );
+            });
+            if (found) {
+              setArticle(found);
+              return;
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      // If initial article exists and nothing else matched, use it as fallback
+      if (initialArticle) {
+        setArticle(initialArticle);
+      }
+    };
+
+    void fetchFromApi();
+  }, [slug, initialArticle]);
 
   if (!mounted) {
     return (
@@ -133,15 +183,15 @@ export function ArticleFallbackReader({ slug }: { slug: string }) {
                 <ShareBar title={article.title} url={pageUrl} description={article.title} />
               </div>
 
-              {article.cover_image && (
+              {article.cover_image && article.cover_image.trim() ? (
                 <div className="mb-6 sm:mb-8 w-full overflow-hidden rounded-sm bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                   <img
-                    src={article.cover_image}
+                    src={article.cover_image.trim()}
                     alt={article.title}
                     className="w-full h-auto max-h-[650px] object-contain mx-auto"
                   />
                 </div>
-              )}
+              ) : null}
 
               <ArticleBody content={article.body || ''} />
             </div>

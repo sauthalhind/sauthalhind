@@ -204,39 +204,50 @@ export default function AdminPage() {
     }
   ) => ({
     ...item,
-    slug: item.slug ?? item.title.toLowerCase().replace(/\s+/g, '-')
+    slug: item.slug ?? generateSafeSlug(item.title)
   });
 
-  const collectPayload = () => ({
-    title: titleRef.current?.value.trim() ?? '',
-    slug:
-      slugRef.current?.value.trim() ||
-      `${(titleRef.current?.value ?? 'story')
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9\u0600-\u06ff]+/gi, '-')
-        .replace(/^-+|-+$/g, '')}-${Date.now().toString(36)}`,
-    author: authorRef.current?.value.trim() ?? 'Editorial',
-    category: categoryRef.current?.value ?? 'Breaking News',
-    body: bodyRef.current?.value.trim() ?? '',
-    cover_image: coverImage
-  });
+  const generateSafeSlug = (title: string) => {
+    const raw = (title || '').trim().toLowerCase();
+    // Allow ASCII (a-z0-9), Arabic (\u0600-\u06ff), and Malayalam (\u0d00-\u0d7f)
+    const cleaned = raw
+      .replace(/[^a-z0-9\u0600-\u06ff\u0d00-\u0d7f]+/gi, '-')
+      .replace(/^-+|-+$/g, '');
+    const timeSuffix = Date.now().toString(36);
+    return cleaned ? `${cleaned}-${timeSuffix}` : `story-${timeSuffix}`;
+  };
+
+  const collectPayload = () => {
+    const title = titleRef.current?.value.trim() ?? '';
+    const customSlug = slugRef.current?.value.trim();
+    return {
+      title,
+      slug: customSlug || generateSafeSlug(title),
+      author: authorRef.current?.value.trim() ?? 'قسم التحرير',
+      category: categoryRef.current?.value ?? 'Breaking News',
+      body: bodyRef.current?.value.trim() ?? '',
+      cover_image: coverImage ? coverImage.trim() : null
+    };
+  };
 
   const fillFormFromNews = (item: { id: string; title: string; slug: string; category: string; status: string; created_at: string; cover_image?: string | null; body?: string; author?: string }) => {
     setEditingId(item.id);
     if (titleRef.current) titleRef.current.value = item.title;
     if (slugRef.current) slugRef.current.value = item.slug;
-    if (authorRef.current) authorRef.current.value = item.author ?? 'Editorial';
+    if (authorRef.current) authorRef.current.value = item.author ?? 'قسم التحرير';
     if (categoryRef.current) categoryRef.current.value = item.category;
     if (bodyRef.current) bodyRef.current.value = item.body ?? '';
-    setCoverImage(item.cover_image ?? null);
+    setCoverImage(item.cover_image ? item.cover_image.trim() : null);
     setCoverImageName('');
     setCoverImageUrlInput(item.cover_image ?? '');
+    if (coverPhotoRef.current) {
+      coverPhotoRef.current.value = '';
+    }
     setSeoTitle(item.title);
     setSeoSlug(item.slug);
     setSeoBody(item.body ?? '');
     setActiveTab('news');
-    flashStatus(`جاري التعديل: ${item.title}`);
+    flashStatus(`جاري تعديل: ${item.title}`);
     window.setTimeout(() => {
       newsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
@@ -252,11 +263,14 @@ export default function AdminPage() {
     setCoverImage(null);
     setCoverImageName('');
     setCoverImageUrlInput('');
+    if (coverPhotoRef.current) {
+      coverPhotoRef.current.value = '';
+    }
     setSeoTitle('');
     setSeoSlug('');
     setSeoBody('');
     setEditorMode('edit');
-    flashStatus('تم مسح المحرر');
+    flashStatus('تم إفراغ المحرر - جاهز لمقال جديد');
   };
 
   const insertAtCursor = (textToInsert: string) => {
@@ -581,6 +595,29 @@ export default function AdminPage() {
     }
   };
 
+  const handleRemoveCoverFromArticle = async (id: string) => {
+    const originalSavedNews = savedNews;
+    const originalLocalNews = readLocalNews();
+
+    const nextSavedNews = savedNews.map((item) => (item.id === id ? { ...item, cover_image: null } : item));
+    setSavedNews(nextSavedNews);
+
+    const nextLocalNews = originalLocalNews.map((item) => (item.id === id ? { ...item, cover_image: null } : item));
+    saveLocalNewsOnly(nextLocalNews);
+    broadcastNewsUpdate();
+    flashStatus('تمت إزالة صورة الغلاف من هذا المقال بنجاح');
+
+    try {
+      await fetch('/api/news', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, cover_image: null })
+      });
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     const loadNews = async () => {
       try {
@@ -591,19 +628,22 @@ export default function AdminPage() {
 
         if (response.ok && result.ok) {
           setDataSource(result.source === 'fallback' ? 'fallback' : 'supabase');
-          const localItems = readLocalNews();
-          const apiItems = result.items.map(normalizeNewsItem);
+          // Admin panel should ONLY manage user articles, not dummy seed news!
+          const localItems = readLocalNews().filter((item) => !item.id.startsWith('seed-'));
+          const apiItems = result.items
+            .filter((item) => !item.id.startsWith('seed-'))
+            .map(normalizeNewsItem);
           const map = new Map();
           [...apiItems, ...localItems].forEach((item) => map.set(item.id, item));
           setSavedNews(Array.from(map.values()));
         } else {
           setDataSource('fallback');
-          setSavedNews(readLocalNews());
+          setSavedNews(readLocalNews().filter((item) => !item.id.startsWith('seed-')));
         }
       } catch (error) {
         console.error('loadNews failed', error);
         setDataSource('error');
-        setSavedNews(readLocalNews());
+        setSavedNews(readLocalNews().filter((item) => !item.id.startsWith('seed-')));
       }
     };
 
@@ -781,6 +821,30 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {editingId && (
+              <div className="mb-6 bg-amber-50 border-2 border-amber-400 p-3 sm:p-4 rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-2xl">✏️</span>
+                  <div className="min-w-0">
+                    <div className="font-bold text-sm text-amber-950">
+                      أنت تقوم الآن بتعديل مقال محفوظ سابقاً.
+                    </div>
+                    <div className="text-xs text-amber-800 mt-0.5">
+                      إذا كنت تريد نشر مقال جديد منفصل بدون التأثير على هذا المقال، اضغط على زر "بدء مقال جديد".
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetEditor}
+                  className="shrink-0 bg-[#bb1919] hover:bg-black text-white px-3.5 py-2 rounded text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                >
+                  <span>➕</span>
+                  <span>إلغاء التعديل والبدء بمقال جديد</span>
+                </button>
+              </div>
+            )}
+
             {/* Step-by-Step Modern Intuitive News Editor */}
             <div className="space-y-6">
               {/* 1. News Title (عنوان الخبر) */}
@@ -895,6 +959,9 @@ export default function AdminPage() {
                             setCoverImage(null);
                             setCoverImageName('');
                             setCoverImageUrlInput('');
+                            if (coverPhotoRef.current) {
+                              coverPhotoRef.current.value = '';
+                            }
                             flashStatus('تمت إزالة صورة الغلاف');
                           }}
                           className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-1"
@@ -1179,21 +1246,35 @@ export default function AdminPage() {
           <section className={`bg-white border border-black/5 p-4 sm:p-6 ${activeTab === 'dashboard' ? 'block' : 'hidden lg:block'}`}>
             <div className="mb-4 sm:mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg sm:text-xl font-bold text-black">
-                الأخبار المنشورة <span key={savedNews.length} translate="no">({savedNews.length})</span>
+                الأخبار المنشورة <span key={savedNews.filter((i) => !i.id.startsWith('seed-')).length} translate="no">({savedNews.filter((i) => !i.id.startsWith('seed-')).length})</span>
               </h2>
             </div>
             
             <div className="grid gap-4">
-              {savedNews.length === 0 ? (
+              {savedNews.filter((i) => !i.id.startsWith('seed-')).length === 0 ? (
                 <div className="text-center py-10 sm:py-12 text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-200">
-                  لا توجد أخبار بعد.
+                  لا توجد أخبار مضافة بعد. اكتب مقالك الأول أعلاه وانشره فوراً.
                 </div>
               ) : (
-                savedNews.map((item) => (
+                savedNews
+                  .filter((item) => !item.id.startsWith('seed-'))
+                  .map((item) => (
                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-white border border-gray-200 p-3 sm:p-4 hover:border-gray-300 transition-colors">
-                    {item.cover_image && (
-                      <div className="w-full sm:w-32 h-28 sm:h-20 shrink-0 bg-gray-100 overflow-hidden rounded-lg">
+                    {item.cover_image ? (
+                      <div className="w-full sm:w-32 h-28 sm:h-20 shrink-0 bg-gray-100 overflow-hidden rounded-lg relative group">
                         <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          title="إزالة صورة الغلاف من هذا المقال"
+                          onClick={() => handleRemoveCoverFromArticle(item.id)}
+                          className="absolute inset-0 bg-black/70 text-white text-[11px] font-bold opacity-0 group-hover:opacity-100 transition flex items-center justify-center p-1 text-center"
+                        >
+                          🗑️ إزالة الغلاف
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-full sm:w-32 h-28 sm:h-20 shrink-0 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-xs font-bold">
+                        بدون غلاف
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -1204,6 +1285,11 @@ export default function AdminPage() {
                     <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 shrink-0">
                       <a href={`/news/${item.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 transition">عرض الخبر</a>
                       <button type="button" disabled={isSaving} onClick={() => fillFormFromNews(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">تعديل</button>
+                      {item.cover_image && (
+                        <button type="button" title="إزالة صورة الغلاف تماماً من هذا المقال" onClick={() => handleRemoveCoverFromArticle(item.id)} className="text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1.5 transition">
+                          إزالة الغلاف
+                        </button>
+                      )}
                       <button type="button" disabled={isSaving} onClick={() => togglePublicDraft(item)} className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 transition">
                         {item.status === 'published' ? 'إلى مسودة' : 'نشر'}
                       </button>
