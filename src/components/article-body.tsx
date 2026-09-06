@@ -106,7 +106,7 @@ function parseArticleBlocks(rawText: string): Block[] {
 
     for (const line of lines) {
       // Regex for Markdown Image: ![caption](url)
-      const mdImgMatch = line.match(/^!\[([^\]]*)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)$/);
+      const mdImgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
       if (mdImgMatch) {
         lineImages.push({ caption: mdImgMatch[1]?.trim() || undefined, url: mdImgMatch[2].trim() });
         continue;
@@ -140,7 +140,7 @@ function parseArticleBlocks(rawText: string): Block[] {
     }
 
     // If there is mixed text and images, check for inline ![caption](url) within text
-    const mdImgGlobal = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g;
+    const mdImgGlobal = /!\[([^\]]*)\]\(([^)]+)\)/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;
     let hasInlineImages = false;
@@ -299,7 +299,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
                   <img
                     src={block.url}
                     alt={block.caption || 'صورة من المقال'}
-                    className="w-full max-h-[550px] object-cover transition duration-300 group-hover:scale-[1.01]"
+                    className="w-full h-auto max-h-[650px] object-contain mx-auto transition duration-300 group-hover:scale-[1.01]"
                     loading="lazy"
                   />
                   <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition flex items-center gap-1.5 pointer-events-none">
@@ -333,7 +333,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
                         <img
                           src={img.url}
                           alt={img.caption || `صورة رقم ${i + 1}`}
-                          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                          className="w-full h-full object-contain sm:object-cover transition duration-300 group-hover:scale-105"
                           loading="lazy"
                         />
                         <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded text-[11px] opacity-0 group-hover:opacity-100 transition flex items-center gap-1 pointer-events-none">
@@ -357,7 +357,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
               <p
                 key={idx}
                 dir="auto"
-                className="text-gray-800 leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl break-words [overflow-wrap:anywhere]"
+                className="whitespace-pre-wrap text-gray-800 leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl break-words [overflow-wrap:anywhere]"
               >
                 {block.text}
               </p>

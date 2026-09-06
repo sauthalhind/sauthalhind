@@ -134,11 +134,11 @@ export function ArticleFallbackReader({ slug }: { slug: string }) {
               </div>
 
               {article.cover_image && (
-                <div className="mb-6 sm:mb-8 w-full overflow-hidden rounded-sm bg-gray-100 border border-gray-200 shadow-sm">
+                <div className="mb-6 sm:mb-8 w-full overflow-hidden rounded-sm bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                   <img
                     src={article.cover_image}
                     alt={article.title}
-                    className="w-full max-h-[550px] object-cover object-center"
+                    className="w-full h-auto max-h-[650px] object-contain mx-auto"
                   />
                 </div>
               )}
