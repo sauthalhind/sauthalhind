@@ -63,6 +63,7 @@ export default function AdminPage() {
   const authorRef = useRef<HTMLInputElement | null>(null);
   const categoryRef = useRef<HTMLSelectElement | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const importFileRef = useRef<HTMLInputElement | null>(null);
 
   // Custom CMS States
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -357,6 +358,56 @@ export default function AdminPage() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const exportNewsBackup = () => {
+    const items = readLocalNews();
+    const sourceItems = items.length > 0 ? items : savedNews;
+    if (sourceItems.length === 0) {
+      flashStatus('لا توجد أخبار لتصديرها (No news to export)');
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sourceItems, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `sauthalhind-news-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    flashStatus(`تم تصدير ${sourceItems.length} خبر بنجاح`);
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) {
+          flashStatus('ملف غير صالح (Invalid JSON format)');
+          return;
+        }
+        const existing = readLocalNews();
+        const map = new Map();
+        existing.forEach((item) => map.set(item.id, item));
+        parsed.forEach((item) => {
+          if (item && item.title) {
+            map.set(item.id || crypto.randomUUID(), item);
+          }
+        });
+        const combined = Array.from(map.values());
+        writeLocalNews(combined);
+        broadcastNewsUpdate();
+        flashStatus(`تم استيراد ${parsed.length} خبر بنجاح`);
+      } catch {
+        flashStatus('خطأ في قراءة ملف النسخة الاحتياطية');
+      }
+    };
+    reader.readAsText(file);
+    if (e.target) e.target.value = '';
   };
 
   const removeNews = async (id: string, title?: string) => {
@@ -828,10 +879,37 @@ export default function AdminPage() {
 
           {/* List of News */}
           <section className={`bg-white border border-black/5 p-3 sm:p-6 rounded-sm ${activeTab === 'dashboard' ? 'block' : 'hidden lg:block'}`}>
-            <div className="mb-4 sm:mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 gap-3">
               <h2 className="text-lg sm:text-xl font-bold text-black">
                 الأخبار المنشورة <span key={savedNews.length} translate="no">({savedNews.length})</span>
               </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={handleImportFile}
+                />
+                <button
+                  type="button"
+                  onClick={exportNewsBackup}
+                  className="text-xs bg-gray-800 hover:bg-black text-white px-3.5 py-2 rounded font-bold flex items-center gap-1.5 transition shadow-sm"
+                  title="تحميل جميع الأخبار كملف JSON للنسخ الاحتياطي"
+                >
+                  <span>📥</span>
+                  <span>تصدير نسخة (Export JSON)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => importFileRef.current?.click()}
+                  className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-3.5 py-2 rounded font-bold flex items-center gap-1.5 transition border border-gray-300"
+                  title="استعادة الأخبار من ملف JSON"
+                >
+                  <span>📤</span>
+                  <span>استيراد (Import JSON)</span>
+                </button>
+              </div>
             </div>
             
             <div className="grid gap-3 sm:gap-4">
