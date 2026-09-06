@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase';
+import { supabaseServer, supabaseUrl, supabaseServiceRoleKey, supabaseAnonKey } from '@/lib/supabase';
 import { listNews } from '@/lib/news-store';
 
 export async function GET() {
@@ -6,8 +6,8 @@ export async function GET() {
   
   let directFetchResult: any = null;
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+    const url = supabaseUrl;
+    const key = supabaseServiceRoleKey || supabaseAnonKey;
     
     if (url && key) {
       const start = Date.now();
