@@ -107,7 +107,7 @@ export async function listNews() {
   }
 
   if (error) {
-    return { ok: false as const, error: error.message, items: SEED_NEWS };
+    return { ok: true as const, error: error.message, items: SEED_NEWS, source: 'fallback' as const };
   }
 
   const items = (data ?? []) as NewsRecord[];
