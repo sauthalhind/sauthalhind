@@ -12,9 +12,19 @@ type Block =
   | { type: 'heading3'; text: string }
   | { type: 'quote'; text: string }
   | { type: 'divider' }
+  | { type: 'youtube'; videoId: string }
+  | { type: 'table'; headers: string[]; rows: string[][] }
+  | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'gallery'; images: Array<{ url: string; caption?: string }> }
   | { type: 'image'; url: string; caption?: string }
   | { type: 'paragraph'; text: string };
+
+function extractYouTubeId(urlOrText: string): string | null {
+  const match = urlOrText.match(
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
+  );
+  return match ? match[1] : null;
+}
 
 function parseArticleBlocks(rawText: string): Block[] {
   if (!rawText) return [];
@@ -32,6 +42,39 @@ function parseArticleBlocks(rawText: string): Block[] {
     // Check if it's a divider
     if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
       blocks.push({ type: 'divider' });
+      continue;
+    }
+
+    // Check if it's a standalone YouTube video link
+    const ytId = extractYouTubeId(trimmed);
+    if (ytId && (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('www.') || trimmed.includes('<iframe'))) {
+      blocks.push({ type: 'youtube', videoId: ytId });
+      continue;
+    }
+
+    // Check if it's a Markdown Table
+    const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (lines.length >= 2 && lines[0].startsWith('|') && lines[0].endsWith('|') && lines[1].includes('---')) {
+      const headers = lines[0].slice(1, -1).split('|').map((h) => h.trim());
+      const rows = lines.slice(2).map((line) => {
+        const clean = line.startsWith('|') && line.endsWith('|') ? line.slice(1, -1) : line;
+        return clean.split('|').map((c) => c.trim());
+      });
+      blocks.push({ type: 'table', headers, rows });
+      continue;
+    }
+
+    // Check if it's an Unordered List
+    if (lines.length > 0 && lines.every((line) => /^[-*•]\s+/.test(line))) {
+      const items = lines.map((line) => line.replace(/^[-*•]\s+/, '').trim());
+      blocks.push({ type: 'list', ordered: false, items });
+      continue;
+    }
+
+    // Check if it's an Ordered List
+    if (lines.length > 0 && lines.every((line) => /^\d+\.\s+/.test(line))) {
+      const items = lines.map((line) => line.replace(/^\d+\.\s+/, '').trim());
+      blocks.push({ type: 'list', ordered: true, items });
       continue;
     }
 
@@ -58,7 +101,6 @@ function parseArticleBlocks(rawText: string): Block[] {
     }
 
     // Check for images in this paragraph block
-    const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
     const lineImages: Array<{ url: string; caption?: string }> = [];
     const nonImageLines: string[] = [];
 
@@ -97,7 +139,7 @@ function parseArticleBlocks(rawText: string): Block[] {
       continue;
     }
 
-    // If there is mixed text and images or standard text, check for inline ![caption](url) within text
+    // If there is mixed text and images, check for inline ![caption](url) within text
     const mdImgGlobal = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -136,20 +178,21 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
   const [activeLightbox, setActiveLightbox] = useState<{ url: string; caption?: string } | null>(null);
 
   if (!content) {
-    return <p className="text-gray-500 italic">لا يوجد محتوى لهذا المقال.</p>;
+    return <p className="text-gray-500 italic py-4">لا يوجد محتوى لهذا المقال.</p>;
   }
 
   const blocks = parseArticleBlocks(content);
 
   return (
-    <div className={`article-content space-y-6 text-[#222] font-normal leading-relaxed sm:leading-loose text-lg md:text-xl ${className}`}>
+    <div className={`article-content space-y-6 text-[#222] font-normal leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl max-w-full break-words ${className}`}>
       {blocks.map((block, idx) => {
         switch (block.type) {
           case 'heading2':
             return (
               <h2
                 key={idx}
-                className="text-2xl md:text-3xl font-bold text-gray-950 mt-8 mb-4 pr-3 border-r-4 border-[#bb1919] leading-snug"
+                dir="auto"
+                className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-950 mt-8 mb-4 pr-3 border-r-4 border-[#bb1919] leading-snug break-words [overflow-wrap:anywhere]"
               >
                 {block.text}
               </h2>
@@ -159,7 +202,8 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
             return (
               <h3
                 key={idx}
-                className="text-xl md:text-2xl font-bold text-gray-900 mt-6 mb-3 pr-2 border-r-2 border-[#bb1919] leading-snug"
+                dir="auto"
+                className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-6 mb-3 pr-2 border-r-2 border-[#bb1919] leading-snug break-words [overflow-wrap:anywhere]"
               >
                 {block.text}
               </h3>
@@ -169,10 +213,11 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
             return (
               <blockquote
                 key={idx}
-                className="my-6 p-4 md:p-6 bg-[#fdf8f8] border-r-4 border-[#bb1919] rounded-r text-gray-800 italic font-semibold text-lg md:text-xl leading-loose shadow-sm"
+                dir="auto"
+                className="my-6 p-4 md:p-6 bg-[#fdf8f8] border-r-4 border-[#bb1919] rounded-r text-gray-800 italic font-semibold text-base sm:text-lg md:text-xl leading-relaxed sm:leading-loose shadow-sm break-words [overflow-wrap:anywhere]"
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-3xl text-[#bb1919] leading-none select-none font-serif">“</span>
+                  <span className="text-2xl sm:text-3xl text-[#bb1919] leading-none select-none font-serif">“</span>
                   <div className="flex-1">{block.text}</div>
                 </div>
               </blockquote>
@@ -183,9 +228,70 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
               <hr key={idx} className="my-8 border-t border-gray-200" />
             );
 
+          case 'youtube':
+            return (
+              <div key={idx} className="my-6 w-full overflow-hidden rounded-md bg-black shadow-md">
+                <div className="relative w-full aspect-video">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${block.videoId}`}
+                    title="YouTube video player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full border-0"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            );
+
+          case 'table':
+            return (
+              <div key={idx} className="my-6 w-full overflow-x-auto border border-gray-200 rounded-md bg-white shadow-sm scrollbar-none">
+                <table className="min-w-full divide-y divide-gray-200 text-sm sm:text-base text-right" dir="auto">
+                  {block.headers.length > 0 && (
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {block.headers.map((h, i) => (
+                          <th key={i} className="px-4 py-3 font-bold text-gray-900 border-b border-gray-200">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  <tbody className="divide-y divide-gray-100">
+                    {block.rows.map((row, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-gray-50/80 transition">
+                        {row.map((cell, cIdx) => (
+                          <td key={cIdx} className="px-4 py-3 text-gray-700 whitespace-normal break-words">
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+
+          case 'list':
+            return block.ordered ? (
+              <ol key={idx} dir="auto" className="my-5 space-y-2 list-decimal list-inside text-gray-800 text-base sm:text-lg leading-relaxed sm:leading-loose pr-2">
+                {block.items.map((item, lIdx) => (
+                  <li key={lIdx} className="break-words [overflow-wrap:anywhere]">{item}</li>
+                ))}
+              </ol>
+            ) : (
+              <ul key={idx} dir="auto" className="my-5 space-y-2 list-disc list-inside text-gray-800 text-base sm:text-lg leading-relaxed sm:leading-loose pr-2">
+                {block.items.map((item, lIdx) => (
+                  <li key={lIdx} className="break-words [overflow-wrap:anywhere]">{item}</li>
+                ))}
+              </ul>
+            );
+
           case 'image':
             return (
-              <figure key={idx} className="my-8 group">
+              <figure key={idx} className="my-6 sm:my-8 group">
                 <div
                   className="relative w-full rounded-md overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer shadow-sm transition hover:shadow-md"
                   onClick={() => setActiveLightbox({ url: block.url, caption: block.caption })}
@@ -204,7 +310,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
                   </div>
                 </div>
                 {block.caption && (
-                  <figcaption className="mt-2 text-xs md:text-sm text-gray-600 flex items-center gap-2 pr-1 font-sans">
+                  <figcaption dir="auto" className="mt-2 text-xs sm:text-sm text-gray-600 flex items-center gap-2 pr-1 font-sans break-words [overflow-wrap:anywhere]">
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-[#bb1919] text-[11px] shrink-0">
                       📷
                     </span>
@@ -216,12 +322,12 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
 
           case 'gallery':
             return (
-              <div key={idx} className="my-8">
+              <div key={idx} className="my-6 sm:my-8">
                 <div className={`grid gap-3 ${block.images.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
                   {block.images.map((img, i) => (
                     <figure key={i} className="group flex flex-col">
                       <div
-                        className="relative w-full h-56 sm:h-64 rounded-md overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer shadow-sm transition hover:shadow-md"
+                        className="relative w-full aspect-[4/3] sm:aspect-video rounded-md overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer shadow-sm transition hover:shadow-md"
                         onClick={() => setActiveLightbox({ url: img.url, caption: img.caption })}
                       >
                         <img
@@ -235,7 +341,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
                         </div>
                       </div>
                       {img.caption && (
-                        <figcaption className="mt-1.5 text-xs text-gray-600 line-clamp-2 pr-1">
+                        <figcaption dir="auto" className="mt-1.5 text-xs text-gray-600 line-clamp-2 pr-1 break-words">
                           📷 {img.caption}
                         </figcaption>
                       )}
@@ -248,7 +354,11 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
           case 'paragraph':
           default:
             return (
-              <p key={idx} className="text-gray-800 leading-relaxed sm:leading-loose text-lg md:text-xl">
+              <p
+                key={idx}
+                dir="auto"
+                className="text-gray-800 leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl break-words [overflow-wrap:anywhere]"
+              >
                 {block.text}
               </p>
             );
@@ -258,7 +368,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
       {/* Fullscreen Lightbox Modal */}
       {activeLightbox && (
         <div
-          className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6"
+          className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-3 sm:p-6"
           onClick={() => setActiveLightbox(null)}
           dir="rtl"
         >
@@ -266,15 +376,15 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
             <button
               type="button"
               onClick={() => setActiveLightbox(null)}
-              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition text-xl font-bold"
-              aria-label="Close modal"
+              className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition text-xl font-bold"
+              aria-label="إغلاق"
             >
               ✕
             </button>
           </div>
 
           <div
-            className="max-w-5xl max-h-[85vh] flex flex-col items-center justify-center"
+            className="max-w-5xl max-h-[85vh] flex flex-col items-center justify-center p-2"
             onClick={(e) => e.stopPropagation()}
           >
             <img
@@ -283,7 +393,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
               className="max-w-full max-h-[75vh] object-contain rounded shadow-2xl"
             />
             {activeLightbox.caption && (
-              <div className="mt-3 bg-black/75 px-4 py-2 rounded text-white text-sm md:text-base text-center max-w-2xl">
+              <div dir="auto" className="mt-3 bg-black/75 px-4 py-2 rounded text-white text-xs sm:text-sm md:text-base text-center max-w-2xl break-words">
                 📷 {activeLightbox.caption}
               </div>
             )}
