@@ -1,8 +1,11 @@
+"use client";
+
 import Link from 'next/link';
+import { useState, useEffect, useMemo } from 'react';
 import { Container } from '@/components/ui';
 import { Header } from '@/components/header';
 import Footer from '@/components/footer';
-import { translateCategory, getArticleExcerpt } from '@/lib/news-store';
+import { translateCategory, getArticleExcerpt, SEED_NEWS } from '@/lib/news-store';
 
 type NewsItem = {
   id: string;
@@ -16,11 +19,95 @@ type NewsItem = {
   author?: string;
 };
 
-export default function HomePageClient({ news }: { news: NewsItem[] }) {
+const localNewsKey = 'sawt-al-hind-admin-news';
+
+function readLocalNews(): NewsItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(localNewsKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export default function HomePageClient({ news: initialNews = [] }: { news?: NewsItem[] }) {
+  const [localNews, setLocalNews] = useState<NewsItem[]>([]);
+  const [apiNews, setApiNews] = useState<NewsItem[]>(initialNews.length > 0 ? initialNews : SEED_NEWS);
+
+  // Sync with browser localStorage and live updates
+  useEffect(() => {
+    const syncLocal = () => {
+      const items = readLocalNews();
+      setLocalNews(items.filter((item) => item.status === 'published' || !item.status));
+    };
+    syncLocal();
+
+    window.addEventListener('storage', syncLocal);
+    window.addEventListener('news-updated', syncLocal);
+
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sawt-al-hind-news') : null;
+    channel?.addEventListener('message', syncLocal);
+
+    // Also poll /api/news to catch freshly published news from server
+    const pollApi = async () => {
+      try {
+        const res = await fetch('/api/news', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && Array.isArray(data.items) && data.items.length > 0) {
+            setApiNews(data.items.filter((i: NewsItem) => i.status === 'published'));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    pollApi();
+    const interval = window.setInterval(pollApi, 10000);
+
+    return () => {
+      window.removeEventListener('storage', syncLocal);
+      window.removeEventListener('news-updated', syncLocal);
+      channel?.close();
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  // Compute merged news: local admin-created articles + server articles + fallback seed articles
+  const news = useMemo(() => {
+    const map = new Map<string, NewsItem>();
+
+    // Add API/Server news first
+    apiNews.forEach((item) => {
+      map.set(item.slug || item.id, item);
+    });
+
+    // Then overlay/prepend local user-created news from admin
+    localNews.forEach((item) => {
+      map.set(item.slug || item.id, item);
+    });
+
+    const list = Array.from(map.values());
+    if (list.length === 0) {
+      return SEED_NEWS;
+    }
+
+    list.sort((a, b) => new Date(b.created_at || Date.now()).getTime() - new Date(a.created_at || Date.now()).getTime());
+    return list;
+  }, [apiNews, localNews]);
+
   const heroStory = news[0];
   const latestNews = news.slice(1, 5);
-  // Extract unique categories, max 6
-  const categories = Array.from(new Set(news.map((item) => item.category).filter(Boolean))).slice(0, 6);
+
+  // Extract categories with reliable defaults
+  const categories = useMemo(() => {
+    const extracted = Array.from(new Set(news.map((item) => item.category).filter(Boolean)));
+    const defaults = ['Breaking News', 'World', 'Economy', 'Culture', 'Sports', 'Religion'];
+    return Array.from(new Set([...extracted, ...defaults])).slice(0, 7);
+  }, [news]);
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">

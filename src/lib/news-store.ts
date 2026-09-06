@@ -112,10 +112,14 @@ export async function listNews() {
 
   const items = (data ?? []) as NewsRecord[];
   if (items.length === 0) {
-    return { ok: true as const, items: [], source: 'supabase' as const };
+    return { ok: true as const, items: SEED_NEWS, source: 'fallback' as const };
   }
 
-  return { ok: true as const, items, source: 'supabase' as const };
+  // Ensure non-conflicting seed news fills any sparse sections so the layout is always rich
+  const existingSlugs = new Set(items.map((i) => i.slug));
+  const combined = [...items, ...SEED_NEWS.filter((s) => !existingSlugs.has(s.slug))];
+
+  return { ok: true as const, items: combined, source: 'supabase' as const };
 }
 
 export async function createNews(payload: NewsPayload) {

@@ -7,6 +7,7 @@ import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
 import { ArticleBody } from '@/components/article-body';
 import { Header } from '@/components/header';
+import { ArticleFallbackReader } from '@/components/article-fallback-reader';
 import { getNewsBySlug, listNews, translateCategory, getArticleExcerpt } from '@/lib/news-store';
 
 type PageProps = {
@@ -74,7 +75,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
   const result = await getNewsBySlug(slug);
 
   if (!result.ok || !result.item) {
-    notFound();
+    return <ArticleFallbackReader slug={slug} />;
   }
 
   const article = result.item;
