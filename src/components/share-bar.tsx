@@ -29,54 +29,49 @@ export function ShareBar({ title, url, description }: ShareBarProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+    <div className="flex flex-wrap gap-2">
       <button
         type="button"
         onClick={nativeShare}
-        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-800 transition hover:bg-gray-100 min-h-[38px] active:scale-95 shadow-sm"
-        title="مشاركة المقال"
+        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
       >
         <ShareIcon />
-        <span>مشاركة</span>
+        Share
       </button>
       <button
         type="button"
         onClick={copyLink}
-        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-800 transition hover:bg-gray-100 min-h-[38px] active:scale-95 shadow-sm"
-        title="نسخ رابط الخبر"
+        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
       >
         <CopyIcon />
-        <span>{copied ? 'تم النسخ ✓' : 'نسخ'}</span>
+        {copied ? 'Copied' : 'Copy link'}
       </button>
       <a
         href={`https://wa.me/?text=${shareText}%20${shareUrl}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-500/20 bg-[#25D366]/10 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-emerald-800 hover:bg-[#25D366]/20 transition min-h-[38px] shadow-sm"
-        title="مشاركة عبر واتساب"
+        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
       >
         <WhatsAppIcon />
-        <span>واتساب</span>
+        WhatsApp
       </a>
       <a
         href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-50 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-blue-800 hover:bg-blue-100 transition min-h-[38px] shadow-sm"
-        title="مشاركة على فيسبوك"
+        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
       >
         <FacebookIcon />
-        <span className="hidden sm:inline">فيسبوك</span>
+        Facebook
       </a>
       <a
         href={`https://x.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-black/20 bg-gray-50 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-900 hover:bg-gray-200 transition min-h-[38px] shadow-sm"
-        title="نشر على منصة X"
+        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
       >
         <XIcon />
-        <span>X</span>
+        X
       </a>
     </div>
   );

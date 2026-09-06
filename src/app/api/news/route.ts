@@ -6,10 +6,10 @@ export async function GET() {
   const result = await listNews();
 
   if (!result.ok) {
-    return Response.json({ ok: false, error: result.error, items: result.items || [] }, { status: 500 });
+    return Response.json({ ok: false, error: result.error }, { status: 500 });
   }
 
-  return Response.json({ ok: true, items: result.items, source: result.source, warning: result.error });
+  return Response.json({ ok: true, items: result.items, source: result.source });
 }
 
 export async function POST(request: Request) {

@@ -26,63 +26,8 @@ type NewsUpdatePayload = Partial<NewsPayload> & {
   id: string;
 };
 
-export const SEED_NEWS: NewsRecord[] = [
-  {
-    id: "seed-1",
-    title: "مفتي الهند يرحب باتفاق السلام الإيراني الأمريكي ويشيد بالدعم الدولي",
-    slug: "india-mufti-welcomes-iran-us-peace-agreement",
-    author: "قسم التحرير",
-    category: "Religion",
-    body: "رحب سماحة مفتي الهند باتفاق السلام التاريخي الأخير بين إيران والولايات المتحدة الأمريكية، مشيداً بالجهود الدبلوماسية الدولية التي ساهمت في خفض التوترات الإقليمية. وفي بيان رسمي صدر اليوم من نيودلهي، أكد سماحته أن هذا الاتفاق يمثل خطوة حيوية نحو تعزيز الأمن والاستقرار العالمي والمحلي، ويسهم بشكل كبير في حماية مصالح الشعوب وسلامها. ودعا سماحته كافة القوى الدولية والمؤسسات العالمية إلى دعم هذا المسار الدبلوماسي البناء وضمان استمرارية الحوار لحل كافة النزاعات القائمة بطرق سلمية وحضارية، بما يخدم السلام العالمي الشامل.",
-    cover_image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80",
-    status: "published",
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString()
-  },
-  {
-    id: "seed-2",
-    title: "العلاقات الاقتصادية الهندية العربية تشهد نمواً تاريخياً في الربع الأول من عام 2026",
-    slug: "india-arab-economic-relations-growth-2026",
-    author: "سمير أحمد",
-    category: "Economy",
-    body: "أظهرت التقارير الرسمية الصادرة عن وزارة التجارة والصناعة الهندية نمواً غير مسبوق في حجم التبادل التجاري والاستثمارات المتبادلة بين جمهورية الهند والدول العربية الشقيقة خلال الربع الأول من العام الجاري. وشهدت قطاعات التكنولوجيا، والطاقة المتجددة، والبنية التحتية، والأمن الغذائي تدفقات استثمارية كبرى تعكس عمق الشراكة الاستراتيجية بين الجانبين. وأكد خبراء اقتصاديون أن هذا النمو يأتي تتويجاً لسلسلة من الاتفاقيات الاقتصادية الشاملة التي تم توقيعها مؤخراً، مما يمهد الطريق لمزيد من التعاون والازدهار المشترك في السنوات المقبلة.",
-    cover_image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80",
-    status: "published",
-    created_at: new Date(Date.now() - 3600000 * 6).toISOString()
-  },
-  {
-    id: "seed-3",
-    title: "مبادرة كبرى لتطوير تقنيات الذكاء الاصطناعي بالتعاون بين الهند والخليج العربي",
-    slug: "india-gulf-ai-development-initiative",
-    author: "نورة القحطاني",
-    category: "World",
-    body: "أعلنت وزارة تكنولوجيا المعلومات والاتصالات الهندية بالتعاون مع مجلس التعاون الخليجي عن إطلاق مبادرة تكنولوجية مشتركة تهدف إلى تسريع وتيرة البحث والتطوير في مجالات الذكاء الاصطناعي والتعلم الآلي. تشمل المبادرة تمويل مشاريع ناشئة مشتركة وتأسيس مراكز تميز ابتكارية في كل من نيودلهي والرياض ودبي. وتهدف هذه الخطوة الاستراتيجية إلى تعزيز السيادة الرقمية وتوفير حلول مبتكرة للقطاعات الخدمية مثل الرعاية الصحية المتقدمة والتعليم الذكي والمدن المستدامة، مما يضع المنطقة في طليعة الثورة الصناعية الرابعة.",
-    cover_image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-    status: "published",
-    created_at: new Date(Date.now() - 3600000 * 12).toISOString()
-  },
-  {
-    id: "seed-4",
-    title: "انطلاق مهرجان الثقافة والفنون العربية الهندية في نيودلهي بمشاركة واسعة",
-    slug: "india-arab-cultural-festival-new-delhi",
-    author: "قسم الثقافة",
-    category: "Culture",
-    body: "افتتح معالي وزير الثقافة الهندي مساء أمس فعاليات مهرجان الثقافة والفنون العربية الهندية السنوي في العاصمة نيودلهي، بحضور لفيف من السفراء العرب والملحقين الثقافيين ونخبة من المفكرين والفنانين. يضم المهرجان هذا العام معارض تشكيلية مشتركة، وعروضاً موسيقية وفلكلورية حية تجسد التمازج الثقافي التاريخي الغني بين شبه القارة الهندية والعالم العربي. ويستمر المهرجان لمدة أسبوع كامل مقدماً ورش عمل فنية وندوات أدبية وعروضاً سينمائية تهدف إلى مد جسور التواصل الإنساني وتعميق الروابط الثقافية بين الشعوب.",
-    cover_image: "https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=1200&q=80",
-    status: "published",
-    created_at: new Date(Date.now() - 3600000 * 24).toISOString()
-  },
-  {
-    id: "seed-5",
-    title: "المنتخب الهندي لكرة القدم يدخل معسكراً مغلقاً استعداداً للتصفيات الآسيوية",
-    slug: "india-football-team-camp-asian-qualifiers",
-    author: "كريم منصور",
-    category: "Sports",
-    body: "بدأ المنتخب الهندي الأول لكرة القدم معسكراً تدريبياً مغلقاً استعداداً للمواجهات الحاسمة المرتقبة في التصفيات الآسيوية المؤهلة لبطولة كأس العالم. وأكد المدير الفني للمنتخب خلال مؤتمر صحفي عقده صباح اليوم على جاهزية اللاعبين وارتفاع الروح المعنوية للفريق، مشيراً إلى أن التدريبات ستركز على تعزيز الجوانب التكتيكية والبدنية لمواجهة الخصوم بقوة. وأعرب الجماهير الهندية عن دعمهم الكامل للمنتخب وتفاؤلهم بتحقيق نتائج تاريخية تؤهل الفريق للمحفل الكروي العالمي الكبير للمرة الأولى.",
-    cover_image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80",
-    status: "published",
-    created_at: new Date(Date.now() - 3600000 * 36).toISOString()
-  }
-];
+export const SEED_NEWS: NewsRecord[] = [];
+
 
 export async function listNews() {
   if (!supabaseServer) {
@@ -107,19 +52,15 @@ export async function listNews() {
   }
 
   if (error) {
-    return { ok: true as const, error: error.message, items: SEED_NEWS, source: 'fallback' as const };
+    return { ok: false as const, error: error.message, items: SEED_NEWS };
   }
 
   const items = (data ?? []) as NewsRecord[];
   if (items.length === 0) {
-    return { ok: true as const, items: SEED_NEWS, source: 'fallback' as const };
+    return { ok: true as const, items: [], source: 'supabase' as const };
   }
 
-  // Ensure non-conflicting seed news fills any sparse sections so the layout is always rich
-  const existingSlugs = new Set(items.map((i) => i.slug));
-  const combined = [...items, ...SEED_NEWS.filter((s) => !existingSlugs.has(s.slug))];
-
-  return { ok: true as const, items: combined, source: 'supabase' as const };
+  return { ok: true as const, items, source: 'supabase' as const };
 }
 
 export async function createNews(payload: NewsPayload) {
@@ -345,40 +286,5 @@ export function translateCategory(cat?: string | null): string {
     default:
       return clean;
   }
-}
-
-/**
- * Strips all markdown image tags, links, headings, and formatting for clean plain text.
- */
-export function stripMarkdown(content?: string | null): string {
-  if (!content) return '';
-  return content
-    // Remove Markdown image syntax: ![caption](url)
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
-    // Remove [image: url | caption] syntax
-    .replace(/\[image:\s*[^|\]]+(?:\|\s*([^\]]*))?\]/gi, '')
-    // Remove HTML img tags
-    .replace(/<img[^>]*>/gi, '')
-    // Remove links [text](url) -> text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    // Remove markdown headers ##
-    .replace(/^#+\s+/gm, '')
-    // Remove blockquotes >
-    .replace(/^>\s+/gm, '')
-    // Remove bold/italics
-    .replace(/[*_~`]{1,3}/g, '')
-    // Collapse multiple whitespaces and newlines
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Returns a clean, trimmed plain text excerpt from article body
- */
-export function getArticleExcerpt(content?: string | null, length: number = 180): string {
-  const plain = stripMarkdown(content);
-  if (!plain) return '';
-  if (plain.length <= length) return plain;
-  return plain.slice(0, length).trim() + '...';
 }
 

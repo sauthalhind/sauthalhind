@@ -5,10 +5,7 @@ import Image from 'next/image';
 import { ShareBar } from '@/components/share-bar';
 import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
-import { ArticleBody } from '@/components/article-body';
-import { Header } from '@/components/header';
-import { ArticleFallbackReader } from '@/components/article-fallback-reader';
-import { getNewsBySlug, listNews, translateCategory, getArticleExcerpt } from '@/lib/news-store';
+import { getNewsBySlug, listNews, translateCategory } from '@/lib/news-store';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -23,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const title = article ? article.title : decodedSlug.replace(/-/g, ' ');
   const description = article?.body 
-    ? getArticleExcerpt(article.body, 180)
+    ? article.body.slice(0, 180).replace(/\s+/g, ' ').trim() + '...'
     : 'جريدة صوت الهند - منصة أخبار عربية مستقلة مع تغطية فورية وتحليلات';
   
   let rawImageUrl = `${baseUrl}/sauthalhind.png`;
@@ -73,15 +70,12 @@ export const revalidate = 60; // ISR revalidation
 export default async function NewsArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const result = await getNewsBySlug(slug);
-  const serverArticle = result.ok ? result.item : null;
 
-  // If there is no server article, or if the server matched a dummy seed article, delegate to ArticleFallbackReader
-  // so the client's local user-created article in localStorage always takes priority over seed articles!
-  if (!serverArticle || serverArticle.id.startsWith('seed-')) {
-    return <ArticleFallbackReader slug={slug} initialArticle={serverArticle} />;
+  if (!result.ok || !result.item) {
+    notFound();
   }
 
-  const article = serverArticle;
+  const article = result.item;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sauthalhind.com';
   const url = `${baseUrl}/news/${article.slug}`;
   const publishedDate = article.created_at ? new Date(article.created_at).toISOString() : new Date().toISOString();
@@ -102,10 +96,25 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
-      {/* Unified Responsive Header */}
-      <Header currentCategory={article.category} />
+      {/* BBC Style Brand Header */}
+      <header className="bg-[#bb1919] text-white sticky top-0 z-50 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-white p-1 rounded-sm flex items-center justify-center">
+              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg leading-none">صوت الهند</span>
+            </div>
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
+            <Link href="/" className="hover:text-gray-200">الرئيسية</Link>
+            <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:text-gray-200">{translateCategory(article.category)}</Link>
+          </nav>
+        </div>
+      </header>
 
-      <Container className="py-4 sm:py-8">
+      <Container className="py-8">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -114,7 +123,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 '@context': 'https://schema.org',
                 '@type': 'NewsArticle',
                 headline: article.title,
-                description: getArticleExcerpt(article.body, 160) || article.title,
+                description: article.body?.slice(0, 160) || article.title,
                 datePublished: publishedDate,
                 dateModified: publishedDate,
                 author: {
@@ -162,73 +171,99 @@ export default async function NewsArticlePage({ params }: PageProps) {
           }}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Article Content Column */}
-          <div className="lg:col-span-8 min-w-0">
-            <article className="bg-white border border-gray-200 shadow-sm rounded-sm overflow-hidden">
-              <div className="p-4 sm:p-6 md:p-10">
-                <div className="mb-3 sm:mb-4 text-xs sm:text-sm font-bold text-[#bb1919]">
+          <div className="lg:col-span-8">
+            <article className="bg-white border border-gray-200 shadow-sm">
+              <div className="p-6 md:p-10">
+                <div className="mb-4 text-sm font-bold text-[#bb1919]">
                   <Link href={`/category/${encodeURIComponent(article.category)}`} className="hover:underline">
                     {translateCategory(article.category)}
                   </Link>
                 </div>
                 
-                <h1
-                  dir="auto"
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-950 leading-snug sm:leading-tight mb-4 sm:mb-6 break-words [overflow-wrap:anywhere]"
-                >
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black leading-tight mb-6">
                   {article.title}
                 </h1>
                 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 mb-6 gap-3 sm:gap-4">
-                  <div className="text-xs sm:text-sm text-gray-600 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span className="font-bold text-gray-800">{article.author}</span>
-                    <span className="text-gray-300">|</span>
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 pb-4 mb-6 gap-4">
+                  <div className="text-sm text-gray-600">
+                    <span className="font-bold">{article.author}</span>
+                    <span className="mx-2">|</span>
                     <span>{new Date(publishedDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <ShareBar title={article.title} url={url} description={article.title} />
                 </div>
 
                 {article.cover_image && (
-                  <div className="mb-6 sm:mb-8 w-full overflow-hidden rounded-sm bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
-                    <img 
-                      src={
-                        article.cover_image.startsWith('http') || article.cover_image.startsWith('data:')
-                          ? article.cover_image
-                          : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`
-                      } 
+                  <div className="mb-8 relative w-full aspect-video max-h-[500px] overflow-hidden rounded-sm">
+                    <Image 
+                      src={article.cover_image.startsWith('http') ? article.cover_image : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`} 
                       alt={article.title} 
-                      className="w-full h-auto max-h-[650px] object-contain mx-auto" 
-                      loading="eager"
+                      fill 
+                      priority
+                      unoptimized
+                      className="object-cover" 
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
                 )}
 
-                <ArticleBody content={article.body} />
+                <div className="whitespace-pre-wrap text-lg md:text-xl leading-loose text-gray-800">
+                  {article.body || 'لا يوجد محتوى في هذا المقال.'}
+                </div>
               </div>
             </article>
 
+            {/* Top News Section for Mobile Screens */}
+            <div className="lg:hidden mt-10 bg-white border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-[#bb1919]">
+                <span className="text-xl">🔥</span>
+                <h2 className="text-xl font-bold text-gray-900">أهم الأخبار</h2>
+              </div>
+              <div className="space-y-4">
+                {topNews.map((item, index) => (
+                  <Link key={item.id} href={`/news/${item.slug}`} className="flex items-start gap-3 group pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                    <span className="text-2xl font-extrabold text-[#bb1919] group-hover:text-black transition w-6 text-center leading-none mt-1">
+                      {index + 1}
+                    </span>
+                    <div className="flex-1">
+                      <span className="text-[10px] font-bold text-[#bb1919] uppercase tracking-wider block mb-0.5">{translateCategory(item.category)}</span>
+                      <h3 className="font-bold text-sm text-gray-900 leading-snug group-hover:text-[#bb1919] transition line-clamp-2">
+                        {item.title}
+                      </h3>
+                    </div>
+                    {item.cover_image && (
+                      <div className="w-14 h-14 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
+                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             {/* Related Articles Section */}
             {relatedNews.length > 0 && (
-              <section className="mt-8 sm:mt-10">
-                <div className="flex items-center gap-3 mb-4 sm:mb-6 border-r-4 border-[#bb1919] pr-3">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">أخبار ذات صلة</h2>
+              <section className="mt-10">
+                <div className="flex items-center gap-3 mb-6 border-r-4 border-[#bb1919] pr-3">
+                  <h2 className="text-2xl font-bold text-gray-900">أخبار ذات صلة</h2>
                   <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">{translateCategory(article.category)}</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {relatedNews.map((item) => (
-                    <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col min-w-0">
+                    <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
                       <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
                         {item.cover_image ? (
-                          <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+                          <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                         ) : (
                           <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold">بدون صورة</div>
                         )}
                       </div>
-                      <div className="p-4 flex flex-col flex-1 justify-between min-w-0">
+                      <div className="p-4 flex flex-col flex-1 justify-between">
                         <div>
                           <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{translateCategory(item.category)}</span>
-                          <h3 dir="auto" className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm break-words">
+                          <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm">
                             {item.title}
                           </h3>
                         </div>
@@ -306,25 +341,25 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
         {/* Latest News Grid Below */}
         {latestNews.length > 0 && (
-          <section className="mt-10 sm:mt-14">
-            <div className="flex items-center justify-between mb-4 sm:mb-6 border-r-4 border-gray-900 pr-3">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">أحدث الأخبار والتغطيات</h2>
+          <section className="mt-14">
+            <div className="flex items-center justify-between mb-6 border-r-4 border-gray-900 pr-3">
+              <h2 className="text-2xl font-bold text-gray-900">أحدث الأخبار والتغطيات</h2>
               <Link href="/search" className="text-xs font-bold text-[#bb1919] hover:underline">عرض الكل &larr;</Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {latestNews.map((item) => (
-                <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col min-w-0">
+                <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
                   <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
                     {item.cover_image ? (
-                      <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+                      <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                     ) : (
                       <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold">بدون صورة</div>
                     )}
                   </div>
-                  <div className="p-4 flex flex-col flex-1 justify-between min-w-0">
+                  <div className="p-4 flex flex-col flex-1 justify-between">
                     <div>
                       <span className="text-[11px] font-bold text-[#bb1919] block mb-1">{translateCategory(item.category)}</span>
-                      <h3 dir="auto" className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm break-words">
+                      <h3 className="font-bold text-gray-900 group-hover:text-[#bb1919] transition leading-snug line-clamp-2 text-sm">
                         {item.title}
                       </h3>
                     </div>
