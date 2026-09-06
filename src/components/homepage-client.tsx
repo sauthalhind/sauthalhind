@@ -20,6 +20,11 @@ type NewsItem = {
 
 export default function HomePageClient({ news: initialNews }: { news: NewsItem[] }) {
   const [news, setNews] = useState<NewsItem[]>(initialNews);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  const handleImageError = (id: string) => {
+    setFailedImages((prev) => ({ ...prev, [id]: true }));
+  };
 
   useEffect(() => {
     try {
@@ -164,11 +169,12 @@ export default function HomePageClient({ news: initialNews }: { news: NewsItem[]
             {heroStory ? (
               <div className="bg-white border border-black/5 p-4 sm:p-6 shadow-sm hover:shadow-md transition">
                 <div className="text-xs font-bold text-[#bb1919] mb-2">{translateCategory(heroStory.category)}</div>
-                {heroStory.cover_image ? (
+                {heroStory.cover_image && !failedImages[heroStory.id] ? (
                   <div className="overflow-hidden bg-black/5 mb-4">
                     <img
                       src={heroStory.cover_image}
                       alt={heroStory.title}
+                      onError={() => handleImageError(heroStory.id)}
                       className="h-64 w-full object-cover sm:h-96 transition duration-500 hover:scale-105"
                     />
                   </div>
@@ -202,9 +208,14 @@ export default function HomePageClient({ news: initialNews }: { news: NewsItem[]
                   {latestNews.map((item) => (
                     <div key={item.id} className="bg-white border border-black/5 p-4 shadow-sm hover:shadow transition flex flex-col justify-between">
                       <div>
-                        {item.cover_image ? (
+                        {item.cover_image && !failedImages[item.id] ? (
                           <div className="overflow-hidden mb-3">
-                            <img src={item.cover_image} alt={item.title} className="h-40 w-full object-cover" />
+                            <img
+                              src={item.cover_image}
+                              alt={item.title}
+                              onError={() => handleImageError(item.id)}
+                              className="h-40 w-full object-cover"
+                            />
                           </div>
                         ) : null}
                         <div className="text-[11px] font-bold text-[#bb1919] mb-1">{translateCategory(item.category)}</div>
@@ -294,9 +305,14 @@ export default function HomePageClient({ news: initialNews }: { news: NewsItem[]
                         {item.title}
                       </h3>
                     </div>
-                    {item.cover_image && (
+                    {item.cover_image && !failedImages[item.id] && (
                       <div className="w-16 h-16 bg-gray-100 overflow-hidden shrink-0 rounded-sm">
-                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        <img
+                          src={item.cover_image}
+                          alt={item.title}
+                          onError={() => handleImageError(item.id)}
+                          className="w-full h-full object-cover group-hover:scale-105 transition"
+                        />
                       </div>
                     )}
                   </Link>
@@ -317,10 +333,17 @@ export default function HomePageClient({ news: initialNews }: { news: NewsItem[]
               {news.slice(0, 8).map((item) => (
                 <Link key={item.id} href={`/news/${item.slug}`} className="group bg-white border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
                   <div className="aspect-video w-full overflow-hidden bg-gray-100 relative">
-                    {item.cover_image ? (
-                      <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    {item.cover_image && !failedImages[item.id] ? (
+                      <img
+                        src={item.cover_image}
+                        alt={item.title}
+                        onError={() => handleImageError(item.id)}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
                     ) : (
-                      <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold">بدون صورة</div>
+                      <div className="h-full w-full bg-gray-100 flex items-center justify-center p-4">
+                        <img src="/sauthalhind.png" alt="Sauthalhind" className="h-8 opacity-30 object-contain" />
+                      </div>
                     )}
                   </div>
                   <div className="p-4 flex flex-col flex-1 justify-between">

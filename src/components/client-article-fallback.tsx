@@ -120,6 +120,9 @@ export default function ClientArticleFallback({ slug }: { slug: string }) {
                     <img 
                       src={article.cover_image} 
                       alt={article.title} 
+                      onError={(e) => {
+                        (e.currentTarget.parentElement as HTMLElement)?.style.setProperty('display', 'none');
+                      }}
                       className="w-full h-auto max-h-[550px] object-cover" 
                     />
                   </div>

@@ -48,6 +48,8 @@ export async function GET() {
   const diagnostics = {
     timestamp: new Date().toISOString(),
     supabaseConfigured: Boolean(supabaseServer),
+    supabaseHost: supabaseUrl ? new URL(supabaseUrl).hostname : 'none',
+    envSupabaseUrlSet: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     newsSource: newsResult.ok ? newsResult.source : 'error',
     newsCount: newsResult.ok ? newsResult.items.length : 0,
     newsError: newsResult.ok ? null : newsResult.error,

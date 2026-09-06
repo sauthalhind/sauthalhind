@@ -1001,7 +1001,14 @@ export default function AdminPage() {
                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 bg-white border border-gray-200 p-3 sm:p-4 hover:border-gray-300 transition-colors rounded-lg shadow-sm">
                     {item.cover_image && (
                       <div className="w-full sm:w-32 h-44 sm:h-24 shrink-0 bg-gray-100 overflow-hidden rounded">
-                        <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover" />
+                        <img
+                          src={item.cover_image}
+                          alt={item.title}
+                          onError={(e) => {
+                            (e.currentTarget.parentElement as HTMLElement)?.style.setProperty('display', 'none');
+                          }}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

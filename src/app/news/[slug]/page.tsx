@@ -7,6 +7,7 @@ import Footer from '@/components/footer';
 import { Container } from '@/components/ui';
 import { getNewsBySlug, listNews, translateCategory } from '@/lib/news-store';
 import ClientArticleFallback from '@/components/client-article-fallback';
+import ArticleCoverImage from '@/components/article-cover-image';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -197,17 +198,10 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 </div>
 
                 {article.cover_image && (
-                  <div className="mb-8 relative w-full aspect-video max-h-[500px] overflow-hidden rounded-sm">
-                    <Image 
-                      src={article.cover_image.startsWith('http') ? article.cover_image : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`} 
-                      alt={article.title} 
-                      fill 
-                      priority
-                      unoptimized
-                      className="object-cover" 
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  </div>
+                  <ArticleCoverImage 
+                    src={article.cover_image.startsWith('http') ? article.cover_image : `${baseUrl}${article.cover_image.startsWith('/') ? '' : '/'}${article.cover_image}`} 
+                    alt={article.title} 
+                  />
                 )}
 
                 <div className="whitespace-pre-wrap text-lg md:text-xl leading-loose text-gray-800">
