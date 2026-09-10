@@ -235,14 +235,18 @@ export default function AdminPage() {
 
     if (rows.length < 2) return [];
     const headers = rows[0].map((h) => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
-    return rows.slice(1).map((row) => {
-      const obj: Record<string, string> = {};
-      headers.forEach((h, idx) => {
-        obj[h] = row[idx] ?? '';
-      });
-      return {
+    return rows.slice(1)
+      .map((row) => {
+        const obj: Record<string, string> = {};
+        headers.forEach((h, idx) => {
+          obj[h] = (row[idx] ?? '').trim();
+        });
+        return obj;
+      })
+      .filter((obj) => obj.title && obj.title.length > 0 && obj.title.toLowerCase() !== 'untitled story')
+      .map((obj) => ({
         id: obj.id || crypto.randomUUID(),
-        title: obj.title || 'Untitled story',
+        title: obj.title,
         slug: obj.slug || `story-${Date.now().toString(36)}`,
         author: obj.author || 'قسم التحرير',
         category: obj.category || 'Breaking News',
@@ -250,8 +254,7 @@ export default function AdminPage() {
         cover_image: obj.cover_image && obj.cover_image !== 'null' ? obj.cover_image : null,
         status: (obj.status as 'published' | 'draft') || 'published',
         created_at: obj.created_at || new Date().toISOString()
-      };
-    });
+      }));
   };
 
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
