@@ -20,51 +20,61 @@ export default async function SearchPage({ searchParams }: { searchParams?: Prom
 
   return (
     <main className="min-h-screen bg-[#f6f6f6] text-[#3f3f3f] antialiased" dir="rtl">
+      {/* Responsive Brand Header */}
       <header className="bg-[#bb1919] text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-[72px] items-center justify-between">
-            <div className="flex items-center gap-4 text-white">
-              <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-10 w-10 brightness-0 invert" />
-              <div>
-                <span className="font-bold text-xl sm:text-2xl tracking-tight">جريدة صوت الهند</span>
-                <span className="text-[10px] opacity-75 mr-2 tracking-widest hidden sm:inline uppercase">Sauthalhind</span>
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="flex h-14 sm:h-16 items-center justify-between">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white p-1 rounded-sm flex items-center justify-center shrink-0">
+                <img src="/sauthalhind.png" alt="Sauthalhind logo" className="h-full object-contain" />
               </div>
-            </div>
-            <div className="flex items-center gap-4 text-xs font-semibold">
-              <Link href="/en" className="hover:bg-white/10 px-3 py-1.5 rounded transition">English</Link>
+              <div className="flex flex-col">
+                <span className="font-bold text-base sm:text-lg leading-none tracking-tight">صوت الهند</span>
+                <span className="text-[9px] sm:text-[10px] text-white/80 uppercase tracking-widest hidden sm:inline">SAUTHALHIND</span>
+              </div>
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-4 text-xs font-semibold">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold px-3 py-1.5 rounded transition"
+              >
+                <span>الرئيسية</span>
+                <span className="text-xs">←</span>
+              </Link>
+              <Link href="/en" className="hover:bg-white/10 px-2.5 py-1.5 rounded transition">English</Link>
             </div>
           </div>
         </div>
       </header>
 
       {/* Categories Navigation Ribbon */}
-      <div className="bg-[#901414] text-white sticky top-0 z-50 shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-6 overflow-x-auto py-3 text-sm font-semibold whitespace-nowrap scrollbar-none">
-            <Link href="/" className="hover:text-gray-200 border-b-2 border-white pb-0.5">الرئيسية</Link>
-            <Link href="/category/Breaking%20News" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار عاجلة</Link>
-            <Link href="/category/World" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">أخبار العالم</Link>
-            <Link href="/category/Economy" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">مال وأعمال</Link>
-            <Link href="/category/Culture" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">ثقافة وفنون</Link>
-            <Link href="/category/Sports" className="hover:text-gray-200 opacity-90 hover:opacity-100 transition">الرياضة</Link>
+      <div className="bg-[#901414] text-white sticky top-0 z-50 shadow-md">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <nav className="flex gap-2 sm:gap-3 overflow-x-auto py-2.5 text-xs sm:text-sm font-semibold whitespace-nowrap scrollbar-none">
+            <Link href="/" className="px-2.5 py-1 rounded hover:bg-white/10 text-white/90 transition">الرئيسية</Link>
+            <Link href="/category/Breaking%20News" className="px-2.5 py-1 rounded hover:bg-white/10 text-white/90 transition">أخبار عاجلة</Link>
+            <Link href="/category/World" className="px-2.5 py-1 rounded hover:bg-white/10 text-white/90 transition">أخبار العالم</Link>
+            <Link href="/category/Economy" className="px-2.5 py-1 rounded hover:bg-white/10 text-white/90 transition">مال وأعمال</Link>
+            <Link href="/category/Culture" className="px-2.5 py-1 rounded hover:bg-white/10 text-white/90 transition">ثقافة وفنون</Link>
+            <Link href="/category/Sports" className="px-2.5 py-1 rounded hover:bg-white/10 text-white/90 transition">الرياضة</Link>
           </nav>
         </div>
       </div>
 
-      <Container className="py-8">
-        <div className="mb-8 border-r-4 border-[#bb1919] pr-4">
-          <h1 className="text-3xl font-bold text-black">البحث في الأخبار</h1>
-          <p className="mt-2 text-sm text-gray-500">ابحث عن التقارير، المقالات، والأخبار المنشورة.</p>
+      <Container className="py-6 sm:py-8 px-3 sm:px-6 lg:px-8">
+        <div className="mb-6 sm:mb-8 border-r-4 border-[#bb1919] pr-3 sm:pr-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-black">البحث في الأخبار</h1>
+          <p className="mt-1 text-xs sm:text-sm text-gray-500">ابحث عن التقارير، المقالات، والأخبار المنشورة.</p>
         </div>
 
-        <form className="mb-10 flex gap-2 max-w-2xl">
+        <form className="mb-8 sm:mb-10 flex flex-col sm:flex-row gap-2 max-w-2xl">
           <input 
             name="q" 
             defaultValue={query} 
-            className="w-full border border-gray-300 bg-white px-4 py-3 outline-none focus:border-[#bb1919] text-black" 
+            className="w-full border border-gray-300 rounded-sm bg-white px-4 py-2.5 sm:py-3 outline-none focus:border-[#bb1919] text-black text-sm" 
             placeholder="ابحث عن العناوين، الأقسام، أو الكلمات المفتاحية..." 
           />
-          <button className="bg-[#bb1919] hover:bg-[#901414] px-6 py-3 font-bold text-white transition">
+          <button className="bg-[#bb1919] hover:bg-[#901414] px-6 py-2.5 sm:py-3 font-bold text-white text-sm rounded-sm transition shrink-0">
             بحث
           </button>
         </form>

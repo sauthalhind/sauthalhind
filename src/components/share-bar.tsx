@@ -29,49 +29,51 @@ export function ShareBar({ title, url, description }: ShareBarProps) {
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={nativeShare}
-        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
-      >
-        <ShareIcon />
-        Share
-      </button>
-      <button
-        type="button"
-        onClick={copyLink}
-        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
-      >
-        <CopyIcon />
-        {copied ? 'Copied' : 'Copy link'}
-      </button>
+    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
       <a
         href={`https://wa.me/?text=${shareText}%20${shareUrl}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
+        className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366] text-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold transition hover:bg-[#20bd5a] shadow-xs active:scale-95"
       >
         <WhatsAppIcon />
-        WhatsApp
+        <span>واتساب</span>
       </a>
+      <button
+        type="button"
+        onClick={nativeShare}
+        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 transition hover:bg-gray-50 active:scale-95 shadow-xs"
+      >
+        <ShareIcon />
+        <span>مشاركة</span>
+      </button>
+      <button
+        type="button"
+        onClick={copyLink}
+        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 transition hover:bg-gray-50 active:scale-95 shadow-xs"
+      >
+        <CopyIcon />
+        <span>{copied ? 'تم النسخ ✓' : 'نسخ الرابط'}</span>
+      </button>
       <a
         href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
+        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-blue-600 transition hover:bg-blue-50 active:scale-95 shadow-xs"
+        title="فيسبوك"
       >
         <FacebookIcon />
-        Facebook
+        <span className="hidden sm:inline">فيسبوك</span>
       </a>
       <a
         href={`https://x.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-brand-onSurface transition hover:bg-brand-surfaceLow"
+        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-800 transition hover:bg-gray-50 active:scale-95 shadow-xs"
+        title="منصة X"
       >
         <XIcon />
-        X
+        <span className="hidden sm:inline">X</span>
       </a>
     </div>
   );
