@@ -31,7 +31,8 @@ export async function POST(request: Request) {
     const path = `${bucket}/${safeName}`;
     const { error } = await storageClient.storage.from(bucket).upload(path, file, {
       upsert: true,
-      contentType: file.type || 'application/octet-stream'
+      contentType: file.type || 'application/octet-stream',
+      cacheControl: '31536000'
     });
 
     if (error) {

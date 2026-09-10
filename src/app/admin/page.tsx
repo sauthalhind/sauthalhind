@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArticleBody } from '@/components/article-body';
+import { compressImage, formatBytes } from '@/lib/image-optimizer';
 
 const menu = [
   'Dashboard',
@@ -423,12 +424,14 @@ export default function AdminPage() {
 
     if (inlineImageFile) {
       setIsUploadingInline(true);
-      flashStatus('جاري رفع صورة المقال...');
-      const formData = new FormData();
-      formData.append('bucket', 'news-media');
-      formData.append('files', inlineImageFile);
-
+      flashStatus('جاري ضغط وتحسين صورة المقال...');
       try {
+        const optResult = await compressImage(inlineImageFile);
+        const formData = new FormData();
+        formData.append('bucket', 'news-media');
+        formData.append('files', optResult.file);
+
+        flashStatus('جاري رفع الصورة المحسّنة...');
         const response = await fetch('/api/upload', {
           method: 'POST',
           body: formData
@@ -440,6 +443,8 @@ export default function AdminPage() {
           return;
         }
         finalUrl = result.uploaded[0].url;
+        const savedMsg = optResult.savingsPercent > 0 ? ` (تم توفير ${optResult.savingsPercent}%)` : '';
+        flashStatus(`تم تحسين ورفع الصورة بنجاح${savedMsg}`);
       } catch (err) {
         console.error('handleInsertInlineImage failed', err);
         flashStatus('خطأ أثناء رفع الصورة');
@@ -478,11 +483,14 @@ export default function AdminPage() {
     try {
       const resolvedGallery: Array<{ url: string; caption: string }> = [];
 
-      for (const item of galleryItems) {
+      for (let i = 0; i < galleryItems.length; i++) {
+        const item = galleryItems[i];
         if (item.file) {
+          flashStatus(`جاري ضغط ورفع صورة المعرض (${i + 1}/${galleryItems.length})...`);
+          const optResult = await compressImage(item.file);
           const formData = new FormData();
           formData.append('bucket', 'news-media');
-          formData.append('files', item.file);
+          formData.append('files', optResult.file);
 
           const res = await fetch('/api/upload', { method: 'POST', body: formData });
           const json = await res.json();
@@ -599,18 +607,27 @@ export default function AdminPage() {
   };
 
   const publishSelectedFiles = async () => {
-    const files = fileInputRef.current?.files;
-    if (!files || files.length === 0) {
+    const rawFiles = fileInputRef.current?.files;
+    if (!rawFiles || rawFiles.length === 0) {
       flashStatus('يرجى اختيار ملف أولاً');
       return;
     }
 
     setIsUploading(true);
     try {
-      flashStatus('جاري الرفع...');
+      flashStatus('جاري ضغط وتحسين الصور...');
       const formData = new FormData();
-      Array.from(files).forEach((file) => formData.append('files', file));
+      let totalSaved = 0;
 
+      for (const file of Array.from(rawFiles)) {
+        const opt = await compressImage(file);
+        formData.append('files', opt.file);
+        if (opt.savingsPercent > 0) {
+          totalSaved += (opt.originalSize - opt.compressedSize);
+        }
+      }
+
+      flashStatus('جاري الرفع إلى السحابة...');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData
@@ -624,8 +641,10 @@ export default function AdminPage() {
       const firstUrl = result.uploaded?.[0]?.url;
       if (firstUrl) {
         setCoverImage(firstUrl);
+        setCoverImageUrlInput(firstUrl);
       }
-      flashStatus(`تم رفع ${result.uploaded?.length ?? 0} ملف(ات)`);
+      const savedText = totalSaved > 0 ? ` (تم توفير ${formatBytes(totalSaved)})` : '';
+      flashStatus(`تم رفع ${result.uploaded?.length ?? 0} ملف(ات) بنجاح${savedText}`);
     } catch (error) {
       console.error('publishSelectedFiles failed', error);
       flashStatus('فشل الرفع');
@@ -1026,17 +1045,20 @@ export default function AdminPage() {
                   accept="image/*"
                   className="hidden"
                   onChange={async (event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
+                    const rawFile = event.target.files?.[0];
+                    if (!rawFile) return;
                     setIsUploading(true);
-                    setCoverImageName(file.name);
-                    flashStatus('جاري رفع صورة الغلاف...');
-                    
-                    const formData = new FormData();
-                    formData.append('bucket', 'news-media');
-                    formData.append('files', file);
+                    flashStatus('جاري ضغط وتحسين صورة الغلاف...');
 
                     try {
+                      const opt = await compressImage(rawFile);
+                      setCoverImageName(`${opt.file.name} (${formatBytes(opt.compressedSize)})`);
+                      
+                      const formData = new FormData();
+                      formData.append('bucket', 'news-media');
+                      formData.append('files', opt.file);
+
+                      flashStatus('جاري رفع صورة الغلاف المحسّنة...');
                       const response = await fetch('/api/upload', {
                         method: 'POST',
                         body: formData
@@ -1049,7 +1071,8 @@ export default function AdminPage() {
                         if (url) {
                           setCoverImage(url);
                           setCoverImageUrlInput(url);
-                          flashStatus('تم رفع صورة الغلاف بنجاح');
+                          const savedMsg = opt.savingsPercent > 0 ? ` (تم تقليل الحجم بنسبة ${opt.savingsPercent}%)` : '';
+                          flashStatus(`تم رفع صورة الغلاف بنجاح${savedMsg}`);
                         }
                       }
                     } catch {
