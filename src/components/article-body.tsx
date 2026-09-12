@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ArticleBodyProps {
   content?: string | null;
@@ -100,6 +100,26 @@ function parseArticleBlocks(rawText: string): Block[] {
       continue;
     }
 
+    // Check for explicit [gallery] ... [/gallery] block
+    const galleryBlockMatch = trimmed.match(/^\[gallery\]([\s\S]*?)\[\/gallery\]$/i);
+    if (galleryBlockMatch) {
+      const inner = galleryBlockMatch[1];
+      const gImages: Array<{ url: string; caption?: string }> = [];
+      const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)|\[image:\s*([^\s|\]]+)(?:\s*\|\s*([^\]]*))?\]/gi;
+      let m: RegExpExecArray | null;
+      while ((m = imgRegex.exec(inner)) !== null) {
+        if (m[2]) {
+          gImages.push({ caption: m[1]?.trim() || undefined, url: m[2].trim() });
+        } else if (m[3]) {
+          gImages.push({ url: m[3].trim(), caption: m[4]?.trim() || undefined });
+        }
+      }
+      if (gImages.length > 0) {
+        blocks.push({ type: 'gallery', images: gImages });
+        continue;
+      }
+    }
+
     // Check for images in this paragraph block
     const lineImages: Array<{ url: string; caption?: string }> = [];
     const nonImageLines: string[] = [];
@@ -171,11 +191,61 @@ function parseArticleBlocks(rawText: string): Block[] {
     blocks.push({ type: 'paragraph', text: trimmed });
   }
 
-  return blocks;
+  // Second pass: Merge consecutive standalone image blocks into a unified gallery block
+  const mergedBlocks: Block[] = [];
+  let pendingImages: Array<{ url: string; caption?: string }> = [];
+
+  for (const block of blocks) {
+    if (block.type === 'image') {
+      pendingImages.push({ url: block.url, caption: block.caption });
+    } else {
+      if (pendingImages.length > 1) {
+        mergedBlocks.push({ type: 'gallery', images: pendingImages });
+      } else if (pendingImages.length === 1) {
+        mergedBlocks.push({ type: 'image', url: pendingImages[0].url, caption: pendingImages[0].caption });
+      }
+      pendingImages = [];
+      mergedBlocks.push(block);
+    }
+  }
+
+  if (pendingImages.length > 1) {
+    mergedBlocks.push({ type: 'gallery', images: pendingImages });
+  } else if (pendingImages.length === 1) {
+    mergedBlocks.push({ type: 'image', url: pendingImages[0].url, caption: pendingImages[0].caption });
+  }
+
+  return mergedBlocks;
 }
 
 export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
-  const [activeLightbox, setActiveLightbox] = useState<{ url: string; caption?: string } | null>(null);
+  const [activeLightbox, setActiveLightbox] = useState<{
+    images: Array<{ url: string; caption?: string }>;
+    index: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!activeLightbox) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveLightbox(null);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        // Next in RTL
+        setActiveLightbox((prev) => {
+          if (!prev || prev.images.length <= 1) return prev;
+          return { ...prev, index: (prev.index + 1) % prev.images.length };
+        });
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        // Previous in RTL
+        setActiveLightbox((prev) => {
+          if (!prev || prev.images.length <= 1) return prev;
+          return { ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length };
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeLightbox]);
 
   if (!content) {
     return <p className="text-gray-500 italic py-4">لا يوجد محتوى لهذا المقال.</p>;
@@ -294,7 +364,7 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
               <figure key={idx} className="my-6 sm:my-8 group">
                 <div
                   className="relative w-full rounded-md overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer shadow-sm transition hover:shadow-md"
-                  onClick={() => setActiveLightbox({ url: block.url, caption: block.caption })}
+                  onClick={() => setActiveLightbox({ images: [{ url: block.url, caption: block.caption }], index: 0 })}
                 >
                   <img
                     src={block.url}
@@ -323,21 +393,32 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
           case 'gallery':
             return (
               <div key={idx} className="my-6 sm:my-8">
-                <div className={`grid gap-3 ${block.images.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                <div className={`grid gap-3 ${
+                  block.images.length === 2
+                    ? 'grid-cols-1 sm:grid-cols-2'
+                    : block.images.length === 3
+                    ? 'grid-cols-1 sm:grid-cols-3'
+                    : block.images.length === 4
+                    ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4'
+                    : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+                }`}>
                   {block.images.map((img, i) => (
                     <figure key={i} className="group flex flex-col">
                       <div
-                        className="relative w-full aspect-[4/3] sm:aspect-video rounded-md overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer shadow-sm transition hover:shadow-md"
-                        onClick={() => setActiveLightbox({ url: img.url, caption: img.caption })}
+                        className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer shadow-sm transition hover:shadow-md"
+                        onClick={() => setActiveLightbox({ images: block.images, index: i })}
                       >
                         <img
                           src={img.url}
                           alt={img.caption || `صورة رقم ${i + 1}`}
-                          className="w-full h-full object-contain sm:object-cover transition duration-300 group-hover:scale-105"
+                          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
                           loading="lazy"
                         />
                         <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded text-[11px] opacity-0 group-hover:opacity-100 transition flex items-center gap-1 pointer-events-none">
                           <span>تكبير 🔍</span>
+                        </div>
+                        <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
+                          {i + 1}
                         </div>
                       </div>
                       {img.caption && (
@@ -366,42 +447,98 @@ export function ArticleBody({ content, className = '' }: ArticleBodyProps) {
       })}
 
       {/* Fullscreen Lightbox Modal */}
-      {activeLightbox && (
-        <div
-          className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-3 sm:p-6"
-          onClick={() => setActiveLightbox(null)}
-          dir="rtl"
-        >
-          <div className="absolute top-4 left-4 z-50 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setActiveLightbox(null)}
-              className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition text-xl font-bold"
-              aria-label="إغلاق"
-            >
-              ✕
-            </button>
-          </div>
+      {activeLightbox && (() => {
+        const currentImg = activeLightbox.images[activeLightbox.index] ?? activeLightbox.images[0];
+        const hasMultiple = activeLightbox.images.length > 1;
 
+        const goNext = () => {
+          setActiveLightbox((prev) => {
+            if (!prev) return null;
+            return { ...prev, index: (prev.index + 1) % prev.images.length };
+          });
+        };
+
+        const goPrev = () => {
+          setActiveLightbox((prev) => {
+            if (!prev) return null;
+            return { ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length };
+          });
+        };
+
+        return (
           <div
-            className="max-w-5xl max-h-[85vh] flex flex-col items-center justify-center p-2"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-2 sm:p-6 select-none"
+            onClick={() => setActiveLightbox(null)}
+            dir="rtl"
           >
-            <img
-              src={activeLightbox.url}
-              alt={activeLightbox.caption || 'صورة مكبرة'}
-              className="max-w-full max-h-[75vh] object-contain rounded shadow-2xl"
-            />
-            {activeLightbox.caption && (
-              <div dir="auto" className="mt-3 bg-black/75 px-4 py-2 rounded text-white text-xs sm:text-sm md:text-base text-center max-w-2xl break-words">
-                📷 {activeLightbox.caption}
+            {/* Top Toolbar: Counter & Close */}
+            <div className="absolute top-4 inset-x-4 z-50 flex items-center justify-between pointer-events-none">
+              <div className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-bold pointer-events-auto">
+                {hasMultiple ? `صورة ${activeLightbox.index + 1} من ${activeLightbox.images.length}` : 'معاينة الصورة'}
               </div>
-            )}
+
+              <button
+                type="button"
+                onClick={() => setActiveLightbox(null)}
+                className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition text-xl font-bold pointer-events-auto shadow-lg"
+                aria-label="إغلاق"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Main Image Container */}
+            <div
+              className="relative max-w-5xl max-h-[85vh] flex flex-col items-center justify-center p-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={currentImg.url}
+                alt={currentImg.caption || 'صورة مكبرة'}
+                className="max-w-full max-h-[75vh] object-contain rounded shadow-2xl transition-transform duration-200"
+              />
+
+              {/* Prev / Next Arrows */}
+              {hasMultiple && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goPrev();
+                    }}
+                    className="absolute right-2 sm:-right-14 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center text-2xl font-bold transition shadow-xl border border-white/20"
+                    title="السابق"
+                  >
+                    ›
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goNext();
+                    }}
+                    className="absolute left-2 sm:-left-14 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center text-2xl font-bold transition shadow-xl border border-white/20"
+                    title="التالي"
+                  >
+                    ‹
+                  </button>
+                </>
+              )}
+
+              {currentImg.caption && (
+                <div dir="auto" className="mt-3 bg-black/80 backdrop-blur-sm px-4 py-2 rounded text-white text-xs sm:text-sm md:text-base text-center max-w-2xl break-words">
+                  📷 {currentImg.caption}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
 
 export default ArticleBody;
+
