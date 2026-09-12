@@ -350,13 +350,14 @@ export default function AdminPage() {
   const collectPayload = () => {
     const title = titleRef.current?.value.trim() ?? '';
     const customSlug = slugRef.current?.value.trim();
+    const resolvedCover = coverImage?.trim() || (coverImageUrlInput?.trim() ? coverImageUrlInput.trim() : null);
     return {
       title,
       slug: customSlug || generateSafeSlug(title),
       author: authorRef.current?.value.trim() ?? 'قسم التحرير',
       category: categoryRef.current?.value ?? 'Breaking News',
       body: bodyRef.current?.value.trim() ?? '',
-      cover_image: coverImage ? coverImage.trim() : null
+      cover_image: resolvedCover
     };
   };
 
@@ -429,10 +430,23 @@ export default function AdminPage() {
       setIsUploadingInline(true);
       flashStatus('جاري ضغط وتحسين صورة المقال...');
       try {
-        const optResult = await compressImage(inlineImageFile);
+        let fileToUpload: File | Blob = inlineImageFile;
+        let fileName = inlineImageFile.name;
+        let savedMsg = '';
+        try {
+          const optResult = await compressImage(inlineImageFile);
+          fileToUpload = optResult.file || optResult.blob || inlineImageFile;
+          fileName = optResult.name || optResult.file?.name || inlineImageFile.name;
+          if (optResult.savingsPercent > 0) {
+            savedMsg = ` (تم توفير ${optResult.savingsPercent}%)`;
+          }
+        } catch (cErr) {
+          console.warn('Inline image compression fallback to raw file:', cErr);
+        }
+
         const formData = new FormData();
         formData.append('bucket', 'news-media');
-        formData.append('files', optResult.file);
+        formData.append('files', fileToUpload, fileName);
 
         flashStatus('جاري رفع الصورة المحسّنة...');
         const response = await fetch('/api/upload', {
@@ -446,7 +460,6 @@ export default function AdminPage() {
           return;
         }
         finalUrl = result.uploaded[0].url;
-        const savedMsg = optResult.savingsPercent > 0 ? ` (تم توفير ${optResult.savingsPercent}%)` : '';
         flashStatus(`تم تحسين ورفع الصورة بنجاح${savedMsg}`);
       } catch (err) {
         console.error('handleInsertInlineImage failed', err);
@@ -490,10 +503,19 @@ export default function AdminPage() {
         const item = galleryItems[i];
         if (item.file) {
           flashStatus(`جاري ضغط ورفع صورة المعرض (${i + 1}/${galleryItems.length})...`);
-          const optResult = await compressImage(item.file);
+          let fileToUpload: File | Blob = item.file;
+          let fileName = item.file.name;
+          try {
+            const optResult = await compressImage(item.file);
+            fileToUpload = optResult.file || optResult.blob || item.file;
+            fileName = optResult.name || optResult.file?.name || item.file.name;
+          } catch (cErr) {
+            console.warn('Gallery image compression fallback to raw file:', cErr);
+          }
+
           const formData = new FormData();
           formData.append('bucket', 'news-media');
-          formData.append('files', optResult.file);
+          formData.append('files', fileToUpload, fileName);
 
           const res = await fetch('/api/upload', { method: 'POST', body: formData });
           const json = await res.json();
@@ -526,6 +548,12 @@ export default function AdminPage() {
   };
 
   const saveNews = async (status: 'draft' | 'published' | 'review' | 'scheduled') => {
+    if (isUploading) {
+      flashStatus('يرجى الانتظار حتى يكتمل رفع صورة الغلاف أولاً...');
+      return;
+    }
+
+    setIsSaving(true);
     const payload = collectPayload();
     const tempId = editingId ?? crypto.randomUUID();
     const optimisticItem = {
@@ -606,6 +634,8 @@ export default function AdminPage() {
       // Keep local news intact! Do not delete it from browser!
       broadcastNewsUpdate();
       flashStatus('تم حفظ الخبر في المتصفح بنجاح');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -623,11 +653,19 @@ export default function AdminPage() {
       let totalSaved = 0;
 
       for (const file of Array.from(rawFiles)) {
-        const opt = await compressImage(file);
-        formData.append('files', opt.file);
-        if (opt.savingsPercent > 0) {
-          totalSaved += (opt.originalSize - opt.compressedSize);
+        let fileToUpload: File | Blob = file;
+        let fileName = file.name;
+        try {
+          const opt = await compressImage(file);
+          fileToUpload = opt.file || opt.blob || file;
+          fileName = opt.name || opt.file?.name || file.name;
+          if (opt.savingsPercent > 0) {
+            totalSaved += (opt.originalSize - opt.compressedSize);
+          }
+        } catch (cErr) {
+          console.warn('Files compression fallback to raw:', cErr);
         }
+        formData.append('files', fileToUpload, fileName);
       }
 
       flashStatus('جاري الرفع إلى السحابة...');
@@ -1054,14 +1092,28 @@ export default function AdminPage() {
                     flashStatus('جاري ضغط وتحسين صورة الغلاف...');
 
                     try {
-                      const opt = await compressImage(rawFile);
-                      setCoverImageName(`${opt.file.name} (${formatBytes(opt.compressedSize)})`);
+                      let fileToUpload: File | Blob = rawFile;
+                      let fileName = rawFile.name;
+                      let savedMsg = '';
+
+                      try {
+                        const opt = await compressImage(rawFile);
+                        fileToUpload = opt.file || opt.blob || rawFile;
+                        fileName = opt.name || opt.file?.name || rawFile.name;
+                        setCoverImageName(`${fileName} (${formatBytes(opt.compressedSize)})`);
+                        if (opt.savingsPercent > 0) {
+                          savedMsg = ` (تم تقليل الحجم بنسبة ${opt.savingsPercent}%)`;
+                        }
+                      } catch (cErr) {
+                        console.warn('Cover image compression fallback to raw:', cErr);
+                        setCoverImageName(`${rawFile.name} (${formatBytes(rawFile.size)})`);
+                      }
                       
                       const formData = new FormData();
                       formData.append('bucket', 'news-media');
-                      formData.append('files', opt.file);
+                      formData.append('files', fileToUpload, fileName);
 
-                      flashStatus('جاري رفع صورة الغلاف المحسّنة...');
+                      flashStatus('جاري رفع صورة الغلاف إلى السيرفر...');
                       const response = await fetch('/api/upload', {
                         method: 'POST',
                         body: formData
@@ -1074,12 +1126,14 @@ export default function AdminPage() {
                         if (url) {
                           setCoverImage(url);
                           setCoverImageUrlInput(url);
-                          const savedMsg = opt.savingsPercent > 0 ? ` (تم تقليل الحجم بنسبة ${opt.savingsPercent}%)` : '';
                           flashStatus(`تم رفع صورة الغلاف بنجاح${savedMsg}`);
+                        } else {
+                          flashStatus('فشل في استلام رابط الصورة من السيرفر');
                         }
                       }
-                    } catch {
-                      flashStatus('خطأ في الرفع');
+                    } catch (err) {
+                      console.error('Upload cover photo failed', err);
+                      flashStatus('خطأ أثناء رفع الصورة، يرجى المحاولة مجدداً');
                     } finally {
                       setIsUploading(false);
                     }
@@ -1088,8 +1142,31 @@ export default function AdminPage() {
 
                 {coverImage ? (
                   <div className="space-y-3">
+                    {coverImage.includes('irukqsfubcpycuxnmxfb') && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <span>⚠️</span>
+                          <span>هذه الصورة مسجلة على مشروع السيرفر القديم المتوقف. يرجى الضغط على &quot;تغيير الصورة&quot; لإعادة رفعها هنا.</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => coverPhotoRef.current?.click()}
+                          disabled={isUploading}
+                          className="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded font-bold whitespace-nowrap text-xs transition"
+                        >
+                          إعادة رفع الصورة الآن
+                        </button>
+                      </div>
+                    )}
                     <div className="relative w-full max-h-[320px] overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
-                      <img src={coverImage} alt="Cover preview" className="w-full max-h-[320px] object-cover" />
+                      <img 
+                        src={coverImage} 
+                        alt="Cover preview" 
+                        className="w-full max-h-[320px] object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                       <div className="text-xs text-gray-500 truncate max-w-md" dir="ltr">
@@ -1127,14 +1204,16 @@ export default function AdminPage() {
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-3 items-center">
                     <div 
-                      onClick={() => coverPhotoRef.current?.click()}
-                      className={`border-2 border-dashed border-gray-300 hover:border-[#bb1919] p-6 text-center cursor-pointer rounded bg-gray-50/50 hover:bg-gray-50 transition flex flex-col items-center justify-center min-h-[140px] ${isUploading ? 'opacity-50' : ''}`}
+                      onClick={() => !isUploading && coverPhotoRef.current?.click()}
+                      className={`border-2 border-dashed border-gray-300 hover:border-[#bb1919] p-6 text-center rounded bg-gray-50/50 hover:bg-gray-50 transition flex flex-col items-center justify-center min-h-[140px] ${isUploading ? 'opacity-60 cursor-wait' : 'cursor-pointer'}`}
                     >
-                      <span className="text-3xl mb-1">📷</span>
+                      <span className="text-3xl mb-1">{isUploading ? '⏳' : '📷'}</span>
                       <span className="text-sm font-bold text-gray-800 mb-0.5">
-                        {isUploading ? 'جاري رفع الصورة...' : 'رفع صورة من جهازك (Upload)'}
+                        {isUploading ? 'جاري رفع الصورة المحسّنة...' : 'رفع صورة من جهازك (Upload)'}
                       </span>
-                      <span className="text-xs text-gray-500">انقر هنا لاختيار ملف صورة الغلاف</span>
+                      <span className="text-xs text-gray-500">
+                        {isUploading ? 'يرجى الانتظار بضع ثوانٍ لحين اكتمال الرفع...' : 'انقر هنا لاختيار ملف صورة الغلاف'}
+                      </span>
                     </div>
 
                     <div className="border border-gray-200 p-4 rounded bg-gray-50/50 flex flex-col justify-center min-h-[140px] space-y-2">
@@ -1365,21 +1444,35 @@ export default function AdminPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button 
                     type="button" 
-                    disabled={isSaving} 
+                    disabled={isSaving || isUploading} 
                     onClick={() => saveNews('published')} 
                     className="bg-[#bb1919] hover:bg-[#a01515] px-6 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm rounded shadow-sm flex items-center gap-2"
                   >
-                    <span>🚀</span>
-                    <span>نشر المقال فوراً (Publish Now)</span>
+                    {isUploading ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        <span>جاري رفع الصورة... (Uploading Image)</span>
+                      </>
+                    ) : isSaving ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        <span>جاري النشر... (Publishing...)</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀</span>
+                        <span>نشر المقال فوراً (Publish Now)</span>
+                      </>
+                    )}
                   </button>
                   <button 
                     type="button" 
-                    disabled={isSaving} 
+                    disabled={isSaving || isUploading} 
                     onClick={() => saveNews('draft')} 
                     className="bg-gray-800 hover:bg-black px-5 py-3 font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed text-sm rounded flex items-center gap-2"
                   >
                     <span>💾</span>
-                    <span>حفظ كمسودة (Save Draft)</span>
+                    <span>{isSaving ? 'جاري الحفظ...' : 'حفظ كمسودة (Save Draft)'}</span>
                   </button>
                 </div>
 

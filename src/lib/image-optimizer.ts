@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Browser-side Image Optimizer & Compressor
  * Automatically compresses raw camera/phone photos (2MB - 10MB) down to ~80KB - 180KB WebP
  * preserving high visual quality while dramatically saving bandwidth and Supabase storage.
@@ -6,6 +6,8 @@
 
 export interface CompressionResult {
   file: File;
+  blob?: Blob;
+  name?: string;
   originalSize: number;
   compressedSize: number;
   savingsPercent: number;
@@ -104,15 +106,28 @@ export async function compressImage(
             const baseName = file.name.replace(/\.[^/.]+$/, '');
             const newName = `${baseName}${extension}`;
 
-            const compressedFile = new File([blob], newName, {
-              type: format,
-              lastModified: Date.now()
-            });
+            let finalFile: File | Blob = blob;
+            try {
+              finalFile = new File([blob], newName, {
+                type: format,
+                lastModified: Date.now()
+              });
+            } catch {
+              // Safari / older mobile fallback: assign name directly to blob
+              try {
+                Object.defineProperty(blob, 'name', { value: newName, writable: true });
+              } catch {
+                // ignore
+              }
+              finalFile = blob;
+            }
 
             const savingsPercent = Math.round(((originalSize - blob.size) / originalSize) * 100);
 
             resolve({
-              file: compressedFile,
+              file: finalFile as File,
+              blob,
+              name: newName,
               originalSize,
               compressedSize: blob.size,
               savingsPercent
