@@ -173,7 +173,7 @@ export async function deleteNews(id: string) {
 }
 
 export async function getNewsBySlug(slug: string) {
-  const decodedSlug = decodeURIComponent(slug);
+  const decodedSlug = decodeURIComponent(slug).trim();
 
   if (supabaseServer) {
     let withCover = await supabaseServer
@@ -188,6 +188,31 @@ export async function getNewsBySlug(slug: string) {
         .select('id,title,slug,author,category,body,cover_image,status,created_at')
         .eq('slug', slug)
         .maybeSingle();
+    }
+
+    // Match by ID if slug is a valid UUID
+    if (!withCover.data && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedSlug)) {
+      withCover = await supabaseServer
+        .from('news')
+        .select('id,title,slug,author,category,body,cover_image,status,created_at')
+        .eq('id', decodedSlug)
+        .maybeSingle();
+    }
+
+    // Prefix match (if slug in DB has an auto-generated random suffix e.g. -mty9zyi1)
+    if (!withCover.data) {
+      const cleanPrefix = decodedSlug.replace(/-[a-z0-9]{6,10}$/i, '');
+      if (cleanPrefix.length > 5) {
+        const prefixRes = await supabaseServer
+          .from('news')
+          .select('id,title,slug,author,category,body,cover_image,status,created_at')
+          .ilike('slug', `${cleanPrefix}%`)
+          .limit(1)
+          .maybeSingle();
+        if (prefixRes.data) {
+          withCover = prefixRes;
+        }
+      }
     }
 
     if (withCover.error?.message?.toLowerCase().includes('cover_image')) {
