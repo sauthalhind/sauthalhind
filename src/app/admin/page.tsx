@@ -1797,17 +1797,28 @@ function AdminPageContent() {
               {/* Live Preview inside Modal */}
               {(inlineImageFile || inlineImageUrl.trim()) && (
                 <div className="border border-gray-200 rounded p-2.5 bg-gray-50 flex items-center gap-3">
-                  <div className="w-20 h-16 rounded overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
+                  <div className="w-20 h-16 rounded overflow-hidden bg-gray-200 shrink-0 border border-gray-300 flex items-center justify-center">
                     <img
                       src={inlineImageFile ? URL.createObjectURL(inlineImageFile) : inlineImageUrl.trim()}
                       alt="Preview"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        if (inlineImageFile) {
+                          const reader = new FileReader();
+                          reader.onload = (evt) => {
+                            if (evt.target?.result) {
+                              (e.target as HTMLImageElement).src = evt.target.result as string;
+                            }
+                          };
+                          reader.readAsDataURL(inlineImageFile);
+                        }
+                      }}
                     />
                   </div>
                   <div className="flex-1 min-w-0 text-xs text-gray-700">
                     <span className="font-bold block text-green-700">✓ معاينة الصورة</span>
                     <span className="truncate block text-[11px] text-gray-500" dir="ltr">
-                      {inlineImageFile ? inlineImageFile.name : inlineImageUrl.trim()}
+                      {inlineImageFile ? `${inlineImageFile.name} (${formatBytes(inlineImageFile.size)})` : inlineImageUrl.trim()}
                     </span>
                     {inlineImageCaption && (
                       <span className="text-[11px] text-gray-600 block mt-0.5 truncate italic">
@@ -1828,7 +1839,7 @@ function AdminPageContent() {
                   setInlineImageUrl('');
                   setInlineImageCaption('');
                 }}
-                className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded"
+                className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded cursor-pointer"
               >
                 إلغاء
               </button>
@@ -1836,7 +1847,8 @@ function AdminPageContent() {
                 type="button"
                 disabled={isUploadingInline || (!inlineImageFile && !inlineImageUrl.trim())}
                 onClick={handleInsertInlineImage}
-                className="bg-[#bb1919] hover:bg-[#901414] text-white px-5 py-2 rounded text-xs font-bold transition disabled:opacity-50 flex items-center gap-2"
+                translate="no"
+                className="bg-[#bb1919] hover:bg-[#901414] text-white px-5 py-2 rounded text-xs font-bold transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
               >
                 {isUploadingInline ? (
                   <>
@@ -1916,13 +1928,18 @@ function AdminPageContent() {
 
               {galleryItems.length > 0 && (
                 <div className="space-y-3">
-                  <div className="text-xs font-bold text-gray-700 flex items-center justify-between">
-                    <span>الصور المختارة ({galleryItems.length}):</span>
+                  <div className="text-xs font-bold text-gray-700 flex items-center justify-between" translate="no">
+                    <span className="flex items-center gap-1.5">
+                      <span>الصور المختارة:</span>
+                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded font-mono font-bold text-xs" dir="ltr">
+                        {galleryItems.length}
+                      </span>
+                    </span>
                     <button
                       type="button"
                       disabled={isUploadingGallery}
                       onClick={() => setGalleryItems([])}
-                      className="text-[11px] text-red-600 hover:underline font-bold"
+                      className="text-[11px] text-red-600 hover:underline font-bold cursor-pointer"
                     >
                       إفراغ الكل
                     </button>
@@ -1930,8 +1947,28 @@ function AdminPageContent() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     {galleryItems.map((item, idx) => (
                       <div key={idx} className="border border-gray-200 p-2 rounded bg-gray-50 relative flex gap-2">
-                        <img src={item.url} alt="Gallery item" className="w-16 h-16 object-cover rounded shrink-0" />
+                        <div className="w-16 h-16 rounded shrink-0 bg-gray-200 overflow-hidden border border-gray-300 relative flex items-center justify-center">
+                          <img
+                            src={item.url}
+                            alt={`صورة ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              if (item.file) {
+                                const reader = new FileReader();
+                                reader.onload = (evt) => {
+                                  if (evt.target?.result) {
+                                    (e.target as HTMLImageElement).src = evt.target.result as string;
+                                  }
+                                };
+                                reader.readAsDataURL(item.file);
+                              }
+                            }}
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-500 truncate font-mono mb-1" dir="ltr">
+                            {item.file ? `${item.file.name} (${formatBytes(item.file.size)})` : `صورة ${idx + 1}`}
+                          </div>
                           <input
                             type="text"
                             placeholder="تعليق الصورة (اختياري)..."
@@ -1951,7 +1988,7 @@ function AdminPageContent() {
                             onClick={() => {
                               setGalleryItems((prev) => prev.filter((_, i) => i !== idx));
                             }}
-                            className="text-[10px] text-red-600 hover:underline mt-1 font-bold block"
+                            className="text-[10px] text-red-600 hover:underline mt-1 font-bold block cursor-pointer"
                           >
                             إزالة الصورة
                           </button>
@@ -1971,7 +2008,7 @@ function AdminPageContent() {
                   setShowGalleryModal(false);
                   setGalleryItems([]);
                 }}
-                className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded"
+                className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded cursor-pointer"
               >
                 إلغاء
               </button>
@@ -1979,7 +2016,8 @@ function AdminPageContent() {
                 type="button"
                 disabled={isUploadingGallery || galleryItems.length === 0}
                 onClick={handleInsertGallery}
-                className="bg-[#bb1919] hover:bg-[#901414] text-white px-5 py-2 rounded text-xs font-bold transition disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                translate="no"
+                className="bg-[#bb1919] hover:bg-[#901414] text-white px-5 py-2 rounded text-xs font-bold transition disabled:opacity-50 flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 {isUploadingGallery ? (
                   <>
@@ -1987,7 +2025,12 @@ function AdminPageContent() {
                     <span>{galleryProgress || 'جاري رفع المعرض...'}</span>
                   </>
                 ) : (
-                  <span>إدراج المعرض ({galleryItems.length} صور) في المقال</span>
+                  <span className="flex items-center gap-1.5" dir="rtl">
+                    <span>إدراج المعرض في المقال</span>
+                    <span className="bg-black/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold" dir="ltr">
+                      ({galleryItems.length})
+                    </span>
+                  </span>
                 )}
               </button>
             </div>
