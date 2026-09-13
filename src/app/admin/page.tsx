@@ -57,8 +57,7 @@ function generateSafeSlug(title: string) {
   const cleaned = raw
     .replace(/[^a-z0-9\u0600-\u06ff\u0d00-\u0d7f]+/gi, '-')
     .replace(/^-+|-+$/g, '');
-  const timeSuffix = Date.now().toString(36);
-  return cleaned ? `${cleaned}-${timeSuffix}` : `story-${timeSuffix}`;
+  return cleaned || `story-${Date.now().toString(36)}`;
 }
 
 function isUserArticle(item: any): boolean {
@@ -1157,13 +1156,15 @@ function AdminPageContent() {
                 <input 
                   ref={titleRef} 
                   onChange={(e) => {
-                    setSeoTitle(e.target.value);
-                    if (!editingId && slugRef.current && !slugRef.current.value) {
-                      const autoSlug = e.target.value
+                    const newTitle = e.target.value;
+                    setSeoTitle(newTitle);
+                    if (!editingId && slugRef.current) {
+                      const autoSlug = newTitle
                         .trim()
                         .toLowerCase()
-                        .replace(/[^a-z0-9\u0600-\u06ff]+/gi, '-')
+                        .replace(/[^a-z0-9\u0600-\u06ff\u0d00-\u0d7f]+/gi, '-')
                         .replace(/^-+|-+$/g, '');
+                      slugRef.current.value = autoSlug;
                       setSeoSlug(autoSlug);
                     }
                   }}
