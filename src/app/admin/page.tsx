@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, Component, ErrorInfo, ReactNode } from 'react';
 import { ArticleBody } from '@/components/article-body';
 import { compressImage, formatBytes } from '@/lib/image-optimizer';
+import { generateSmartSlug } from '@/lib/news-store';
 
 const menu = [
   'Dashboard',
@@ -52,12 +53,7 @@ const settings = [
 ];
 
 function generateSafeSlug(title: string) {
-  const raw = (title || '').trim().toLowerCase();
-  // Allow ASCII (a-z0-9), Arabic (\u0600-\u06ff), and Malayalam (\u0d00-\u0d7f)
-  const cleaned = raw
-    .replace(/[^a-z0-9\u0600-\u06ff\u0d00-\u0d7f]+/gi, '-')
-    .replace(/^-+|-+$/g, '');
-  return cleaned || `story-${Date.now().toString(36)}`;
+  return generateSmartSlug(title);
 }
 
 function isUserArticle(item: any): boolean {
@@ -440,7 +436,7 @@ function AdminPageContent() {
     const resolvedCover = coverImage?.trim() || (coverImageUrlInput?.trim() ? coverImageUrlInput.trim() : null);
     return {
       title,
-      slug: customSlug || generateSafeSlug(title),
+      slug: customSlug ? generateSmartSlug(customSlug) : generateSmartSlug(title),
       author: authorRef.current?.value.trim() ?? 'قسم التحرير',
       category: categoryRef.current?.value ?? 'Breaking News',
       body: bodyRef.current?.value.trim() ?? '',
@@ -1159,11 +1155,7 @@ function AdminPageContent() {
                     const newTitle = e.target.value;
                     setSeoTitle(newTitle);
                     if (!editingId && slugRef.current) {
-                      const autoSlug = newTitle
-                        .trim()
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\u0600-\u06ff\u0d00-\u0d7f]+/gi, '-')
-                        .replace(/^-+|-+$/g, '');
+                      const autoSlug = generateSmartSlug(newTitle);
                       slugRef.current.value = autoSlug;
                       setSeoSlug(autoSlug);
                     }

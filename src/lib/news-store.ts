@@ -28,6 +28,67 @@ type NewsUpdatePayload = Partial<NewsPayload> & {
 
 export const SEED_NEWS: NewsRecord[] = [];
 
+/**
+ * Smart Slug Generator for Saut Al-Hind
+ * Converts Arabic headlines into clean, URL-safe English/Latin Romanized slugs.
+ * Ensures URLs are 100% ASCII, zero-encoding issues in WhatsApp/social media,
+ * and completely avoids broken characters or diacritic mismatches.
+ */
+export function generateSmartSlug(text: string): string {
+  if (!text || !text.trim()) {
+    return `news-${Date.now().toString(36)}`;
+  }
+
+  const trimmed = text.trim();
+
+  // If text already contains primarily English/Latin characters
+  const latinCount = (trimmed.match(/[a-zA-Z]/g) || []).length;
+  const arabicCount = (trimmed.match(/[\u0600-\u06FF]/g) || []).length;
+
+  if (latinCount >= arabicCount && latinCount > 0) {
+    const clean = trimmed
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const parts = clean.split('-').filter(Boolean).slice(0, 10);
+    return parts.join('-') || `news-${Date.now().toString(36)}`;
+  }
+
+  // Remove Arabic diacritics / tashkeel (fatha, damma, kasra, tanween, shaddah, sukun) & tatweel
+  const cleaned = trimmed.replace(/[\u064B-\u065F\u0670\u0640]/g, '');
+
+  // Arabic to Latin phonetic transliteration map
+  const map: Record<string, string> = {
+    'أ': 'a', 'إ': 'i', 'آ': 'a', 'ا': 'a', 'ء': 'a', 'ئ': 'y', 'ؤ': 'w',
+    'ب': 'b', 'ت': 't', 'ة': 'a', 'ث': 'th',
+    'ج': 'j', 'ح': 'h', 'خ': 'kh',
+    'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z',
+    'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd',
+    'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh',
+    'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l',
+    'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w',
+    'ي': 'y', 'ى': 'a'
+  };
+
+  let result = '';
+  for (let i = 0; i < cleaned.length; i++) {
+    const char = cleaned[i];
+    if (map[char]) {
+      result += map[char];
+    } else if (/[a-zA-Z0-9]/.test(char)) {
+      result += char.toLowerCase();
+    } else {
+      result += '-';
+    }
+  }
+
+  result = result.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+  const parts = result.split('-').filter(Boolean).slice(0, 10);
+  const finalSlug = parts.join('-');
+
+  return finalSlug || `news-${Date.now().toString(36)}`;
+}
+
 
 export async function listNews() {
   if (!supabaseServer) {
@@ -211,6 +272,38 @@ export async function getNewsBySlug(slug: string) {
           .maybeSingle();
         if (prefixRes.data) {
           withCover = prefixRes;
+        }
+      }
+    }
+
+    // Transliteration match: If requested slug was Arabic, check if DB has English smart slug
+    if (!withCover.data) {
+      const smart = generateSmartSlug(decodedSlug);
+      if (smart && smart !== decodedSlug) {
+        const smartRes = await supabaseServer
+          .from('news')
+          .select('id,title,slug,author,category,body,cover_image,status,created_at')
+          .eq('slug', smart)
+          .maybeSingle();
+        if (smartRes.data) {
+          withCover = smartRes;
+        }
+      }
+    }
+
+    // Reverse transliteration match: If requested slug was English, check recent articles for matching title
+    if (!withCover.data && !/[\u0600-\u06FF]/.test(decodedSlug)) {
+      const candidates = await supabaseServer
+        .from('news')
+        .select('id,title,slug,author,category,body,cover_image,status,created_at')
+        .order('created_at', { ascending: false })
+        .limit(40);
+      if (candidates.data) {
+        const matched = candidates.data.find(
+          (c) => generateSmartSlug(c.title) === decodedSlug || generateSmartSlug(c.slug) === decodedSlug
+        );
+        if (matched) {
+          return { ok: true as const, item: matched as NewsRecord };
         }
       }
     }
