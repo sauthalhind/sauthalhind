@@ -235,6 +235,7 @@ export async function deleteNews(id: string) {
 
 export async function getNewsBySlug(slug: string) {
   const decodedSlug = decodeURIComponent(slug).trim();
+  const normalizedSlug = decodedSlug.replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
 
   if (supabaseServer) {
     let withCover = await supabaseServer
@@ -242,6 +243,14 @@ export async function getNewsBySlug(slug: string) {
       .select('id,title,slug,author,category,body,cover_image,status,created_at')
       .eq('slug', decodedSlug)
       .maybeSingle();
+
+    if (!withCover.data && normalizedSlug && normalizedSlug !== decodedSlug) {
+      withCover = await supabaseServer
+        .from('news')
+        .select('id,title,slug,author,category,body,cover_image,status,created_at')
+        .eq('slug', normalizedSlug)
+        .maybeSingle();
+    }
 
     if (!withCover.data && decodedSlug !== slug) {
       withCover = await supabaseServer
