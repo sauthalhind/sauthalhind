@@ -690,8 +690,7 @@ function AdminPageContent() {
       setSavedNews(nextSavedNews);
       broadcastNewsUpdate();
 
-      resetEditor();
-      flashStatus(status === 'published' ? 'تم النشر محلياً (جاري المزامنة...)' : 'تم الحفظ كمسودة (جاري المزامنة...)');
+      flashStatus(status === 'published' ? 'جاري رفع ونشر الخبر على الموقع...' : 'جاري حفظ المسودة...');
 
       // 2. Perform background sync
       const response = await fetch('/api/news', {
@@ -706,7 +705,7 @@ function AdminPageContent() {
 
       if (!response.ok || !result.ok) {
         broadcastNewsUpdate();
-        flashStatus(result && !result.ok ? `تم الحفظ في المتصفح (${result.error})` : 'تم الحفظ محلياً في المتصفح');
+        flashStatus(result && !result.ok ? `تنبيه: فشل المزامنة السحابية (${result.error})` : 'فشل حفظ الخبر في السيرفر');
         return;
       }
 
@@ -733,8 +732,9 @@ function AdminPageContent() {
       );
       setSavedNews(syncedSavedNews);
 
+      resetEditor();
       broadcastNewsUpdate();
-      flashStatus(status === 'published' ? 'تم النشر بنجاح' : 'تم الحفظ بنجاح');
+      flashStatus(status === 'published' ? 'تم نشر الخبر بنجاح على الموقع!' : 'تم حفظ المسودة بنجاح!');
     } catch (error) {
       console.error('saveNews background sync failed', error);
       // Keep local news intact! Do not delete it from browser!

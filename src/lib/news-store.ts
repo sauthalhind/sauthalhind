@@ -145,12 +145,22 @@ export async function createNews(payload: NewsPayload) {
     .select('id,title,slug,author,category,body,cover_image,status,created_at')
     .single();
 
+  if (insertResult.error && (insertResult.error.message.includes('unique') || insertResult.error.message.includes('duplicate') || insertResult.error.code === '23505')) {
+    const uniqueSlug = `${payload.slug}-${Date.now().toString(36).slice(-4)}`;
+    baseInsert.slug = uniqueSlug;
+    insertResult = await supabaseServer
+      .from('news')
+      .insert(baseInsert)
+      .select('id,title,slug,author,category,body,cover_image,status,created_at')
+      .single();
+  }
+
   if (insertResult.error?.message?.toLowerCase().includes('cover_image')) {
     insertResult = await supabaseServer
       .from('news')
       .insert({
         title: payload.title,
-        slug: payload.slug,
+        slug: baseInsert.slug,
         author: payload.author,
         category: payload.category,
         body: payload.body,
